@@ -13,7 +13,8 @@ interface FilePreviewProps {
   targetContent: string;
   sourceFile: File | null;
   targetFile: File | null;
-  detectedFormat: 'json' | 'xml' | 'yaml';
+  sourceDetectedFormat: 'json' | 'xml' | 'yaml';
+  targetDetectedFormat: 'json' | 'xml' | 'yaml';
 }
 
 const FilePreview: React.FC<FilePreviewProps> = ({
@@ -21,7 +22,8 @@ const FilePreview: React.FC<FilePreviewProps> = ({
   targetContent,
   sourceFile,
   targetFile,
-  detectedFormat
+  sourceDetectedFormat,
+  targetDetectedFormat
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState<'source' | 'target'>('source');
@@ -42,19 +44,19 @@ const FilePreview: React.FC<FilePreviewProps> = ({
     return content.length;
   };
 
-  const validateContent = (content: string): { isValid: boolean; error?: string } => {
+  const validateContent = (content: string, format: 'json' | 'xml' | 'yaml'): { isValid: boolean; error?: string } => {
     if (!content.trim()) {
       return { isValid: false, error: 'Content is empty' };
     }
 
     try {
-      const isValid = FormatDetector.validateFormat(content, detectedFormat);
+      const isValid = FormatDetector.validateFormat(content, format);
       if (!isValid) {
-        return { isValid: false, error: `Invalid ${detectedFormat.toUpperCase()} format` };
+        return { isValid: false, error: `Invalid ${format.toUpperCase()} format. Please check the syntax and structure.` };
       }
       return { isValid: true };
     } catch (error) {
-      return { isValid: false, error: error.message };
+      return { isValid: false, error: `${format.toUpperCase()} parsing error: ${error.message}` };
     }
   };
 
@@ -76,9 +78,9 @@ const FilePreview: React.FC<FilePreviewProps> = ({
     toast.success(`${filename} downloaded successfully!`);
   };
 
-  const formatContent = (content: string): string => {
+  const formatContent = (content: string, format: 'json' | 'xml' | 'yaml'): string => {
     try {
-      if (detectedFormat === 'json') {
+      if (format === 'json') {
         return JSON.stringify(JSON.parse(content), null, 2);
       }
       return content; // XML and YAML are already formatted
@@ -87,8 +89,8 @@ const FilePreview: React.FC<FilePreviewProps> = ({
     }
   };
 
-  const renderFileInfo = (content: string, file: File | null, label: string) => {
-    const validation = validateContent(content);
+  const renderFileInfo = (content: string, file: File | null, label: string, format: 'json' | 'xml' | 'yaml') => {
+    const validation = validateContent(content, format);
     const lineCount = getLineCount(content);
     const charCount = getCharacterCount(content);
 
@@ -107,7 +109,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
           <div className="flex items-center gap-2">
             {validation.isValid ? (
               <Badge className="bg-green-100 text-green-800 border-green-300">
-                Valid {detectedFormat.toUpperCase()}
+                Valid {format.toUpperCase()}
               </Badge>
             ) : (
               <Badge className="bg-red-100 text-red-800 border-red-300">
@@ -135,7 +137,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
           </div>
           <div className="bg-gray-50 p-2 rounded">
             <div className="text-gray-600">Format</div>
-            <div className="font-semibold">{detectedFormat.toUpperCase()}</div>
+            <div className="font-semibold">{format.toUpperCase()}</div>
           </div>
         </div>
 
@@ -152,13 +154,13 @@ const FilePreview: React.FC<FilePreviewProps> = ({
     );
   };
 
-  const renderContentPreview = (content: string, file: File | null, label: string) => {
-    const formattedContent = formatContent(content);
-    const filename = file?.name || `${label.toLowerCase()}-content.${detectedFormat}`;
+  const renderContentPreview = (content: string, file: File | null, label: string, format: 'json' | 'xml' | 'yaml') => {
+    const formattedContent = formatContent(content, format);
+    const filename = file?.name || `${label.toLowerCase()}-content.${format}`;
 
     return (
       <div className="space-y-4">
-        {renderFileInfo(content, file, label)}
+        {renderFileInfo(content, file, label, format)}
         
         <div className="flex items-center justify-between">
           <h4 className="font-medium text-gray-900">Content Preview</h4>
@@ -184,7 +186,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
 
         <ScrollArea className="h-64 w-full border rounded-lg">
           <pre className="p-4 text-sm font-mono whitespace-pre-wrap">
-            <code className={`language-${detectedFormat}`}>
+            <code className={`language-${format}`}>
               {formattedContent}
             </code>
           </pre>
@@ -197,6 +199,9 @@ const FilePreview: React.FC<FilePreviewProps> = ({
     return null;
   }
 
+  // Show format mismatch warning if both files are present but formats differ
+  const showFormatMismatch = sourceContent && targetContent && sourceDetectedFormat !== targetDetectedFormat;
+
   return (
     <Card className="mt-6">
       <CardHeader className="pb-3">
@@ -204,9 +209,20 @@ const FilePreview: React.FC<FilePreviewProps> = ({
           <CardTitle className="flex items-center gap-2 text-lg">
             <Eye className="h-5 w-5" />
             File Preview
-            <Badge variant="outline" className="ml-2">
-              {detectedFormat.toUpperCase()}
-            </Badge>
+            {sourceContent && targetContent ? (
+              <div className="flex gap-2 ml-2">
+                <Badge variant="outline">
+                  Source: {sourceDetectedFormat.toUpperCase()}
+                </Badge>
+                <Badge variant="outline">
+                  Target: {targetDetectedFormat.toUpperCase()}
+                </Badge>
+              </div>
+            ) : (
+              <Badge variant="outline" className="ml-2">
+                {sourceContent ? sourceDetectedFormat.toUpperCase() : targetDetectedFormat.toUpperCase()}
+              </Badge>
+            )}
           </CardTitle>
           <Button
             variant="ghost"
@@ -226,6 +242,18 @@ const FilePreview: React.FC<FilePreviewProps> = ({
             )}
           </Button>
         </div>
+        {showFormatMismatch && (
+          <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-center gap-2 text-red-800">
+              <AlertCircle className="h-4 w-4" />
+              <span className="font-medium">Format Mismatch Detected</span>
+            </div>
+            <p className="text-red-700 text-sm mt-1">
+              Source file is {sourceDetectedFormat.toUpperCase()} but target file is {targetDetectedFormat.toUpperCase()}. 
+              Both files must be in the same format to perform comparison.
+            </p>
+          </div>
+        )}
       </CardHeader>
 
       {isExpanded && (
@@ -241,6 +269,9 @@ const FilePreview: React.FC<FilePreviewProps> = ({
                       {sourceFile.name}
                     </Badge>
                   )}
+                  <Badge variant="outline" className="ml-1 text-xs">
+                    {sourceDetectedFormat.toUpperCase()}
+                  </Badge>
                 </TabsTrigger>
                 <TabsTrigger value="target" className="flex items-center gap-2">
                   <FileText className="h-4 w-4" />
@@ -250,21 +281,24 @@ const FilePreview: React.FC<FilePreviewProps> = ({
                       {targetFile.name}
                     </Badge>
                   )}
+                  <Badge variant="outline" className="ml-1 text-xs">
+                    {targetDetectedFormat.toUpperCase()}
+                  </Badge>
                 </TabsTrigger>
               </TabsList>
 
               <TabsContent value="source" className="mt-4">
-                {renderContentPreview(sourceContent, sourceFile, 'Source')}
+                {renderContentPreview(sourceContent, sourceFile, 'Source', sourceDetectedFormat)}
               </TabsContent>
 
               <TabsContent value="target" className="mt-4">
-                {renderContentPreview(targetContent, targetFile, 'Target')}
+                {renderContentPreview(targetContent, targetFile, 'Target', targetDetectedFormat)}
               </TabsContent>
             </Tabs>
           ) : sourceContent ? (
-            renderContentPreview(sourceContent, sourceFile, 'Source')
+            renderContentPreview(sourceContent, sourceFile, 'Source', sourceDetectedFormat)
           ) : (
-            renderContentPreview(targetContent, targetFile, 'Target')
+            renderContentPreview(targetContent, targetFile, 'Target', targetDetectedFormat)
           )}
         </CardContent>
       )}

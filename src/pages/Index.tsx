@@ -25,6 +25,8 @@ const Index = () => {
   const [targetFile, setTargetFile] = useState<File | null>(null);
   const [inputMethod, setInputMethod] = useState<'upload' | 'paste'>('upload');
   const [fileFormat, setFileFormat] = useState<'json' | 'xml' | 'yaml'>('json');
+  const [sourceDetectedFormat, setSourceDetectedFormat] = useState<'json' | 'xml' | 'yaml'>('json');
+  const [targetDetectedFormat, setTargetDetectedFormat] = useState<'json' | 'xml' | 'yaml'>('json');
   const [ignoreKeys, setIgnoreKeys] = useState('');
   const [strictMode, setStrictMode] = useState(true);
   const [isComparing, setIsComparing] = useState(false);
@@ -39,9 +41,14 @@ const Index = () => {
         const content = e.target?.result as string || '';
         setSourceContent(content);
         
-        // Auto-detect format from the first uploaded file
+        // Detect format for source file
         const detectedFormat = FormatDetector.detectFormat(content, files.source?.name);
-        setFileFormat(detectedFormat);
+        setSourceDetectedFormat(detectedFormat);
+        
+        // Set the main file format if this is the first file
+        if (!targetContent) {
+          setFileFormat(detectedFormat);
+        }
       };
       reader.readAsText(files.source);
     }
@@ -52,9 +59,12 @@ const Index = () => {
         const content = e.target?.result as string || '';
         setTargetContent(content);
         
-        // Auto-detect format if source wasn't uploaded yet
-        if (!sourceFile) {
-          const detectedFormat = FormatDetector.detectFormat(content, files.target?.name);
+        // Detect format for target file
+        const detectedFormat = FormatDetector.detectFormat(content, files.target?.name);
+        setTargetDetectedFormat(detectedFormat);
+        
+        // Set the main file format if this is the first file
+        if (!sourceContent) {
           setFileFormat(detectedFormat);
         }
       };
@@ -64,18 +74,26 @@ const Index = () => {
 
   const compareFiles = async (): Promise<ComparisonResult> => {
     try {
+      // Check if formats match
+      if (sourceDetectedFormat !== targetDetectedFormat) {
+        throw new Error(`Format mismatch: Source file is ${sourceDetectedFormat.toUpperCase()} but target file is ${targetDetectedFormat.toUpperCase()}. Both files must be in the same format to compare.`);
+      }
+
+      // Use the detected format for comparison
+      const comparisonFormat = sourceDetectedFormat;
+
       // Validate format for both files
-      if (!FormatDetector.validateFormat(sourceContent, fileFormat)) {
-        throw new Error(`Source file is not valid ${fileFormat.toUpperCase()}`);
+      if (!FormatDetector.validateFormat(sourceContent, comparisonFormat)) {
+        throw new Error(`Source file contains invalid ${comparisonFormat.toUpperCase()} format. Please check the file content and try again.`);
       }
       
-      if (!FormatDetector.validateFormat(targetContent, fileFormat)) {
-        throw new Error(`Target file is not valid ${fileFormat.toUpperCase()}`);
+      if (!FormatDetector.validateFormat(targetContent, comparisonFormat)) {
+        throw new Error(`Target file contains invalid ${comparisonFormat.toUpperCase()} format. Please check the file content and try again.`);
       }
 
       // Parse both files
-      const sourceData = FileParser.parse(sourceContent, fileFormat);
-      const targetData = FileParser.parse(targetContent, fileFormat);
+      const sourceData = FileParser.parse(sourceContent, comparisonFormat);
+      const targetData = FileParser.parse(targetContent, comparisonFormat);
 
       // Prepare ignore keys
       const ignoreKeysList = ignoreKeys
@@ -85,37 +103,44 @@ const Index = () => {
 
       // Create comparator and compare
       const comparator = new FileComparator(ignoreKeysList, strictMode);
-      const result = comparator.compare(sourceData, targetData, fileFormat);
+      const result = comparator.compare(sourceData, targetData, comparisonFormat);
 
       return result;
     } catch (error) {
-      throw new Error(`Comparison failed: ${error.message}`);
+      throw new Error(error.message || 'An unexpected error occurred during comparison');
     }
   };
 
   const handleCompare = async () => {
     if (!sourceContent || !targetContent) {
-      toast.error('Please provide both source and target files');
+      toast.error('Please provide both source and target files to compare');
+      return;
+    }
+
+    // Check for format mismatch before starting comparison
+    if (sourceContent && targetContent && sourceDetectedFormat !== targetDetectedFormat) {
+      toast.error(`Cannot compare files: Source is ${sourceDetectedFormat.toUpperCase()} but target is ${targetDetectedFormat.toUpperCase()}`, {
+        description: 'Both files must be in the same format. Please upload files of the same type.'
+      });
       return;
     }
 
     setIsComparing(true);
     try {
-      // Auto-detect format if not explicitly set
-      const detectedFormat = FormatDetector.detectFormat(
-        sourceContent, 
-        sourceFile?.name || targetFile?.name
-      );
-      setFileFormat(detectedFormat);
-
       const result = await compareFiles();
       setComparisonResult(result);
       setShowResult(true);
       
       const totalChanges = result.summary.additions + result.summary.deletions + result.summary.modifications;
-      toast.success(`Comparison completed! Found ${totalChanges} changes.`);
+      if (totalChanges === 0) {
+        toast.success('Files are identical! No differences found.');
+      } else {
+        toast.success(`Comparison completed successfully! Found ${totalChanges} ${totalChanges === 1 ? 'change' : 'changes'}.`);
+      }
     } catch (error) {
-      toast.error(error.message || 'Failed to compare files. Please check the format and try again.');
+      toast.error('Comparison Failed', {
+        description: error.message || 'An unexpected error occurred. Please check your files and try again.'
+      });
       console.error('Comparison error:', error);
     } finally {
       setIsComparing(false);
@@ -130,7 +155,7 @@ const Index = () => {
       summary: comparisonResult.summary,
       changes: comparisonResult.diff,
       settings: {
-        format: fileFormat,
+        format: sourceDetectedFormat,
         strictMode,
         ignoredKeys: ignoreKeys.split(',').filter(k => k.trim())
       },
@@ -168,20 +193,30 @@ const Index = () => {
     setTargetContent('');
     setSourceFile(null);
     setTargetFile(null);
+    setSourceDetectedFormat('json');
+    setTargetDetectedFormat('json');
+    setFileFormat('json');
   };
 
-  // Auto-detect format when content changes
+  // Auto-detect format when source content changes
   React.useEffect(() => {
     if (sourceContent && !sourceFile) {
       const detectedFormat = FormatDetector.detectFormat(sourceContent);
-      setFileFormat(detectedFormat);
+      setSourceDetectedFormat(detectedFormat);
+      if (!targetContent) {
+        setFileFormat(detectedFormat);
+      }
     }
-  }, [sourceContent, sourceFile]);
+  }, [sourceContent, sourceFile, targetContent]);
 
+  // Auto-detect format when target content changes
   React.useEffect(() => {
-    if (targetContent && !targetFile && !sourceContent) {
+    if (targetContent && !targetFile) {
       const detectedFormat = FormatDetector.detectFormat(targetContent);
-      setFileFormat(detectedFormat);
+      setTargetDetectedFormat(detectedFormat);
+      if (!sourceContent) {
+        setFileFormat(detectedFormat);
+      }
     }
   }, [targetContent, targetFile, sourceContent]);
 
@@ -194,7 +229,7 @@ const Index = () => {
               <h1 className="text-3xl font-bold text-gray-900 mb-2">Configuration Comparison Results</h1>
               <p className="text-gray-600">Visual diff analysis and summary report</p>
               <div className="flex gap-2 mt-2">
-                <Badge variant="outline">Format: {fileFormat.toUpperCase()}</Badge>
+                <Badge variant="outline">Format: {sourceDetectedFormat.toUpperCase()}</Badge>
                 <Badge variant="outline">Mode: {strictMode ? 'Strict' : 'Lenient'}</Badge>
                 {ignoreKeys && (
                   <Badge variant="outline">Ignored: {ignoreKeys.split(',').length} keys</Badge>
@@ -225,7 +260,7 @@ const Index = () => {
               <DiffViewer 
                 sourceLines={comparisonResult.formatted_diff.source}
                 targetLines={comparisonResult.formatted_diff.target}
-                format={fileFormat}
+                format={sourceDetectedFormat}
               />
             </div>
           </div>
@@ -306,7 +341,8 @@ const Index = () => {
                 targetContent={targetContent}
                 sourceFile={sourceFile}
                 targetFile={targetFile}
-                detectedFormat={fileFormat}
+                sourceDetectedFormat={sourceDetectedFormat}
+                targetDetectedFormat={targetDetectedFormat}
               />
 
               <Separator className="my-8" />
@@ -373,9 +409,9 @@ const Index = () => {
               <div className="flex justify-center mt-8">
                 <Button
                   onClick={handleCompare}
-                  disabled={isComparing || (!sourceContent || !targetContent)}
+                  disabled={isComparing || (!sourceContent || !targetContent) || (sourceContent && targetContent && sourceDetectedFormat !== targetDetectedFormat)}
                   size="lg"
-                  className="bg-[#EE001E] hover:bg-[#EE001E]/90 text-white px-8 py-3 text-lg"
+                  className="bg-[#EE001E] hover:bg-[#EE001E]/90 text-white px-8 py-3 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isComparing ? (
                     <>
@@ -397,26 +433,39 @@ const Index = () => {
                     <div className="flex gap-4">
                       {sourceContent && (
                         <Badge variant="secondary" className="bg-green-100 text-green-800">
-                          Source: {sourceContent.split('\n').length} lines
+                          Source: {sourceContent.split('\n').length} lines ({sourceDetectedFormat.toUpperCase()})
                         </Badge>
                       )}
                       {targetContent && (
                         <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                          Target: {targetContent.split('\n').length} lines
+                          Target: {targetContent.split('\n').length} lines ({targetDetectedFormat.toUpperCase()})
                         </Badge>
                       )}
                     </div>
                     <div className="flex gap-2">
-                      <Badge variant="outline" className="border-[#EE001E] text-[#EE001E]">
-                        Format: {fileFormat.toUpperCase()}
-                      </Badge>
-                      {sourceContent && targetContent && (
+                      {sourceContent && targetContent && sourceDetectedFormat !== targetDetectedFormat ? (
+                        <Badge variant="destructive" className="bg-red-100 text-red-800 border-red-300">
+                          Format Mismatch
+                        </Badge>
+                      ) : sourceContent && targetContent ? (
                         <Badge variant="outline" className="border-green-500 text-green-700">
                           Ready to Compare
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="border-[#EE001E] text-[#EE001E]">
+                          Waiting for Files
                         </Badge>
                       )}
                     </div>
                   </div>
+                  {sourceContent && targetContent && sourceDetectedFormat !== targetDetectedFormat && (
+                    <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <p className="text-red-800 text-sm">
+                        <strong>Cannot compare:</strong> Source file is {sourceDetectedFormat.toUpperCase()} but target file is {targetDetectedFormat.toUpperCase()}. 
+                        Both files must be in the same format.
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
             </CardContent>
