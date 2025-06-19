@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { ChevronDown, ChevronUp, Copy, Maximize2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,60 +35,90 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ sourceLines, targetLines, forma
     }
   };
 
-  // Process lines to identify modifications properly
-  const processLinesForModifications = (lines: string[]) => {
-    const processedLines: string[] = [];
-    const lineMap = new Map<number, string>();
-    
-    // First pass: collect all lines
-    lines.forEach((line, index) => {
-      lineMap.set(index, line);
-    });
-
-    // Second pass: identify modifications
-    for (let i = 0; i < lines.length; i++) {
-      const currentLine = lines[i];
-      const nextLine = lines[i + 1];
-      
-      // Check if current line is a removal and next line is an addition (potential modification)
-      if (currentLine.startsWith('-') && nextLine && nextLine.startsWith('+')) {
-        const removedContent = currentLine.substring(1).trim();
-        const addedContent = nextLine.substring(1).trim();
-        
-        // If the line structure is similar, treat as modification
-        if (areLinesRelated(removedContent, addedContent)) {
-          processedLines.push(`~ ${addedContent} (was: ${removedContent})`);
-          i++; // Skip the next line since we've processed it
-          continue;
-        }
-      }
-      
-      processedLines.push(currentLine);
-    }
-    
-    return processedLines;
-  };
-
-  const areLinesRelated = (line1: string, line2: string): boolean => {
-    // Check if lines have similar structure (same key but different value)
-    const key1 = extractKey(line1);
-    const key2 = extractKey(line2);
-    return key1 && key2 && key1 === key2;
-  };
-
   const extractKey = (line: string): string | null => {
-    // Extract key from different formats
+    // Remove diff prefixes first
+    const cleanLine = line.replace(/^[+-~]\s*/, '').trim();
+    
     if (format === 'json') {
-      const match = line.match(/"([^"]+)"\s*:/);
+      const match = cleanLine.match(/"([^"]+)"\s*:/);
       return match ? match[1] : null;
     } else if (format === 'yaml') {
-      const match = line.match(/^(\s*)([^:]+):/);
+      const match = cleanLine.match(/^(\s*)([^:]+):/);
       return match ? match[2].trim() : null;
     } else if (format === 'xml') {
-      const match = line.match(/<([^>\s]+)(?:\s|>)/);
+      const match = cleanLine.match(/<([^>\s/]+)(?:\s|>)/);
       return match ? match[1] : null;
     }
     return null;
+  };
+
+  const extractValue = (line: string): string | null => {
+    const cleanLine = line.replace(/^[+-~]\s*/, '').trim();
+    
+    if (format === 'json') {
+      const match = cleanLine.match(/"[^"]+"\s*:\s*(.+?)(?:,\s*$|$)/);
+      return match ? match[1].trim() : null;
+    } else if (format === 'yaml') {
+      const match = cleanLine.match(/^(\s*)[^:]+:\s*(.+?)(?:\s*$)/);
+      return match ? match[2].trim() : null;
+    } else if (format === 'xml') {
+      const match = cleanLine.match(/>([^<]+)</);
+      return match ? match[1].trim() : null;
+    }
+    return null;
+  };
+
+  const processLinesForModifications = (lines: string[]) => {
+    const processedLines: string[] = [];
+    const removedLines: { index: number; line: string; key: string | null; value: string | null }[] = [];
+    
+    for (let i = 0; i < lines.length; i++) {
+      const currentLine = lines[i];
+      
+      if (currentLine.startsWith('-') && !currentLine.startsWith('--')) {
+        // Store removed line for potential modification detection
+        const key = extractKey(currentLine);
+        const value = extractValue(currentLine);
+        removedLines.push({ index: i, line: currentLine, key, value });
+        continue;
+      }
+      
+      if (currentLine.startsWith('+') && !currentLine.startsWith('++')) {
+        // Check if this addition matches a recent removal (modification)
+        const addedKey = extractKey(currentLine);
+        const addedValue = extractValue(currentLine);
+        
+        // Look for a matching removed line with same key but different value
+        const matchingRemovedIndex = removedLines.findIndex(removed => 
+          removed.key && addedKey && 
+          removed.key === addedKey && 
+          removed.value !== addedValue
+        );
+        
+        if (matchingRemovedIndex !== -1) {
+          // Found a modification - replace the removed line with a changed line
+          const removedLine = removedLines[matchingRemovedIndex];
+          const modifiedLine = `~ ${currentLine.substring(1)} (was: ${removedLine.value})`;
+          processedLines.push(modifiedLine);
+          removedLines.splice(matchingRemovedIndex, 1);
+        } else {
+          // Add any remaining removed lines that didn't match
+          removedLines.forEach(removed => processedLines.push(removed.line));
+          removedLines.length = 0;
+          processedLines.push(currentLine);
+        }
+      } else {
+        // Add any remaining removed lines that didn't match
+        removedLines.forEach(removed => processedLines.push(removed.line));
+        removedLines.length = 0;
+        processedLines.push(currentLine);
+      }
+    }
+    
+    // Add any remaining removed lines
+    removedLines.forEach(removed => processedLines.push(removed.line));
+    
+    return processedLines;
   };
 
   const copyToClipboard = (content: string[], side: string) => {
