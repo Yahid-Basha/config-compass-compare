@@ -13,24 +13,9 @@ import { toast } from 'sonner';
 import FileUploader from '@/components/FileUploader';
 import DiffViewer from '@/components/DiffViewer';
 import SummaryPanel from '@/components/SummaryPanel';
-
-interface ComparisonResult {
-  summary: {
-    additions: number;
-    deletions: number;
-    modifications: number;
-  };
-  diff: Array<{
-    path: string;
-    change_type: 'addition' | 'deletion' | 'modification';
-    old_value?: any;
-    new_value?: any;
-  }>;
-  formatted_diff: {
-    source: string[];
-    target: string[];
-  };
-}
+import { FileParser } from '@/utils/fileParser';
+import { FileComparator, ComparisonResult } from '@/utils/fileComparator';
+import { FormatDetector } from '@/utils/formatDetector';
 
 const Index = () => {
   const [sourceContent, setSourceContent] = useState('');
@@ -49,146 +34,62 @@ const Index = () => {
     if (files.source) {
       setSourceFile(files.source);
       const reader = new FileReader();
-      reader.onload = (e) => setSourceContent(e.target?.result as string || '');
+      reader.onload = (e) => {
+        const content = e.target?.result as string || '';
+        setSourceContent(content);
+        
+        // Auto-detect format from the first uploaded file
+        const detectedFormat = FormatDetector.detectFormat(content, files.source?.name);
+        setFileFormat(detectedFormat);
+      };
       reader.readAsText(files.source);
     }
     if (files.target) {
       setTargetFile(files.target);
       const reader = new FileReader();
-      reader.onload = (e) => setTargetContent(e.target?.result as string || '');
+      reader.onload = (e) => {
+        const content = e.target?.result as string || '';
+        setTargetContent(content);
+        
+        // Auto-detect format if source wasn't uploaded yet
+        if (!sourceFile) {
+          const detectedFormat = FormatDetector.detectFormat(content, files.target?.name);
+          setFileFormat(detectedFormat);
+        }
+      };
       reader.readAsText(files.target);
     }
   };
 
-  const detectFileFormat = (content: string, filename?: string): 'json' | 'xml' | 'yaml' => {
-    if (filename) {
-      const ext = filename.toLowerCase().split('.').pop();
-      if (ext === 'json') return 'json';
-      if (ext === 'xml') return 'xml';
-      if (ext === 'yaml' || ext === 'yml') return 'yaml';
+  const compareFiles = async (): Promise<ComparisonResult> => {
+    try {
+      // Validate format for both files
+      if (!FormatDetector.validateFormat(sourceContent, fileFormat)) {
+        throw new Error(`Source file is not valid ${fileFormat.toUpperCase()}`);
+      }
+      
+      if (!FormatDetector.validateFormat(targetContent, fileFormat)) {
+        throw new Error(`Target file is not valid ${fileFormat.toUpperCase()}`);
+      }
+
+      // Parse both files
+      const sourceData = FileParser.parse(sourceContent, fileFormat);
+      const targetData = FileParser.parse(targetContent, fileFormat);
+
+      // Prepare ignore keys
+      const ignoreKeysList = ignoreKeys
+        .split(',')
+        .map(key => key.trim())
+        .filter(Boolean);
+
+      // Create comparator and compare
+      const comparator = new FileComparator(ignoreKeysList, strictMode);
+      const result = comparator.compare(sourceData, targetData, fileFormat);
+
+      return result;
+    } catch (error) {
+      throw new Error(`Comparison failed: ${error.message}`);
     }
-
-    const trimmed = content.trim();
-    if (trimmed.startsWith('{') || trimmed.startsWith('[')) return 'json';
-    if (trimmed.startsWith('<')) return 'xml';
-    return 'yaml';
-  };
-
-  const generateMockDiffForFormat = (format: 'json' | 'xml' | 'yaml') => {
-    if (format === 'json') {
-      return {
-        source: [
-          '{',
-          '  "database": {',
-          '-    "host": "localhost",',
-          '     "port": 5432',
-          '  },',
-          '  "features": {',
-          '     "authentication": true',
-          '  },',
-          '-  "deprecated": {',
-          '-    "oldSetting": "removed"',
-          '-  }'
-        ],
-        target: [
-          '{',
-          '  "database": {',
-          '+    "host": "prod-db.example.com",',
-          '     "port": 5432',
-          '  },',
-          '  "features": {',
-          '     "authentication": true,',
-          '+    "newFeature": true',
-          '  }',
-          '}'
-        ]
-      };
-    } else if (format === 'xml') {
-      return {
-        source: [
-          '<?xml version="1.0" encoding="UTF-8"?>',
-          '<configuration>',
-          '  <database>',
-          '-    <host>localhost</host>',
-          '     <port>5432</port>',
-          '  </database>',
-          '  <features>',
-          '     <authentication>true</authentication>',
-          '  </features>',
-          '-  <deprecated>',
-          '-    <oldSetting>removed</oldSetting>',
-          '-  </deprecated>',
-          '</configuration>'
-        ],
-        target: [
-          '<?xml version="1.0" encoding="UTF-8"?>',
-          '<configuration>',
-          '  <database>',
-          '+    <host>prod-db.example.com</host>',
-          '     <port>5432</port>',
-          '  </database>',
-          '  <features>',
-          '     <authentication>true</authentication>',
-          '+    <newFeature>true</newFeature>',
-          '  </features>',
-          '</configuration>'
-        ]
-      };
-    } else { // yaml
-      return {
-        source: [
-          'database:',
-          '-  host: localhost',
-          '   port: 5432',
-          'features:',
-          '   authentication: true',
-          '-deprecated:',
-          '-  oldSetting: removed'
-        ],
-        target: [
-          'database:',
-          '+  host: prod-db.example.com',
-          '   port: 5432',
-          'features:',
-          '   authentication: true',
-          '+  newFeature: true'
-        ]
-      };
-    }
-  };
-
-  const mockCompareFiles = async (): Promise<ComparisonResult> => {
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    const mockDiff = generateMockDiffForFormat(fileFormat);
-
-    return {
-      summary: {
-        additions: 3,
-        deletions: 2,
-        modifications: 5
-      },
-      diff: [
-        {
-          path: 'config.database.host',
-          change_type: 'modification',
-          old_value: 'localhost',
-          new_value: 'prod-db.example.com'
-        },
-        {
-          path: 'config.features.newFeature',
-          change_type: 'addition',
-          new_value: true
-        },
-        {
-          path: 'config.deprecated.oldSetting',
-          change_type: 'deletion',
-          old_value: 'removed'
-        }
-      ],
-      formatted_diff: mockDiff
-    };
   };
 
   const handleCompare = async () => {
@@ -199,19 +100,21 @@ const Index = () => {
 
     setIsComparing(true);
     try {
-      const detectedFormat = detectFileFormat(
+      // Auto-detect format if not explicitly set
+      const detectedFormat = FormatDetector.detectFormat(
         sourceContent, 
         sourceFile?.name || targetFile?.name
       );
       setFileFormat(detectedFormat);
 
-      // In a real implementation, this would call the backend API
-      const result = await mockCompareFiles();
+      const result = await compareFiles();
       setComparisonResult(result);
       setShowResult(true);
-      toast.success('Comparison completed successfully!');
+      
+      const totalChanges = result.summary.additions + result.summary.deletions + result.summary.modifications;
+      toast.success(`Comparison completed! Found ${totalChanges} changes.`);
     } catch (error) {
-      toast.error('Failed to compare files. Please check the format and try again.');
+      toast.error(error.message || 'Failed to compare files. Please check the format and try again.');
       console.error('Comparison error:', error);
     } finally {
       setIsComparing(false);
@@ -229,6 +132,10 @@ const Index = () => {
         format: fileFormat,
         strictMode,
         ignoredKeys: ignoreKeys.split(',').filter(k => k.trim())
+      },
+      files: {
+        source: sourceFile?.name || 'pasted-content',
+        target: targetFile?.name || 'pasted-content'
       }
     };
 
@@ -245,8 +152,11 @@ const Index = () => {
   };
 
   const handleSimulateAlert = () => {
-    toast.info('Alert sent to Slack channel #config-changes!', {
-      description: 'Team has been notified about configuration differences.'
+    if (!comparisonResult) return;
+    
+    const totalChanges = comparisonResult.summary.additions + comparisonResult.summary.deletions + comparisonResult.summary.modifications;
+    toast.info(`Alert sent to Slack channel #config-changes!`, {
+      description: `Found ${totalChanges} changes between configurations. Team has been notified.`
     });
   };
 
@@ -259,6 +169,21 @@ const Index = () => {
     setTargetFile(null);
   };
 
+  // Auto-detect format when content changes
+  React.useEffect(() => {
+    if (sourceContent && !sourceFile) {
+      const detectedFormat = FormatDetector.detectFormat(sourceContent);
+      setFileFormat(detectedFormat);
+    }
+  }, [sourceContent, sourceFile]);
+
+  React.useEffect(() => {
+    if (targetContent && !targetFile && !sourceContent) {
+      const detectedFormat = FormatDetector.detectFormat(targetContent);
+      setFileFormat(detectedFormat);
+    }
+  }, [targetContent, targetFile, sourceContent]);
+
   if (showResult && comparisonResult) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#F6F0E2] to-white">
@@ -267,6 +192,13 @@ const Index = () => {
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">Configuration Comparison Results</h1>
               <p className="text-gray-600">Visual diff analysis and summary report</p>
+              <div className="flex gap-2 mt-2">
+                <Badge variant="outline">Format: {fileFormat.toUpperCase()}</Badge>
+                <Badge variant="outline">Mode: {strictMode ? 'Strict' : 'Lenient'}</Badge>
+                {ignoreKeys && (
+                  <Badge variant="outline">Ignored: {ignoreKeys.split(',').length} keys</Badge>
+                )}
+              </div>
             </div>
             <div className="flex gap-3">
               <Button variant="outline" onClick={resetComparison}>
@@ -308,7 +240,7 @@ const Index = () => {
           <h1 className="text-4xl font-bold text-gray-900 mb-4">Config Compass Compare</h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             Compare configuration files with visual diffs and detailed analytics. 
-            Supports JSON, XML, and YAML formats.
+            Supports JSON, XML, and YAML formats with intelligent parsing.
           </p>
         </div>
 
@@ -390,6 +322,9 @@ const Index = () => {
                       <option value="xml">XML</option>
                       <option value="yaml">YAML</option>
                     </select>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Auto-detected from file content
+                    </p>
                   </div>
 
                   <div>
@@ -402,6 +337,9 @@ const Index = () => {
                       value={ignoreKeys}
                       onChange={(e) => setIgnoreKeys(e.target.value)}
                     />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Keys to exclude from comparison
+                    </p>
                   </div>
 
                   <div className="flex items-center space-x-3">
@@ -432,7 +370,7 @@ const Index = () => {
                   {isComparing ? (
                     <>
                       <div className="animate-spin h-5 w-5 mr-3 border-2 border-white border-t-transparent rounded-full" />
-                      Comparing Files...
+                      Analyzing Files...
                     </>
                   ) : (
                     <>
@@ -458,9 +396,16 @@ const Index = () => {
                         </Badge>
                       )}
                     </div>
-                    <Badge variant="outline" className="border-[#EE001E] text-[#EE001E]">
-                      Format: {fileFormat.toUpperCase()}
-                    </Badge>
+                    <div className="flex gap-2">
+                      <Badge variant="outline" className="border-[#EE001E] text-[#EE001E]">
+                        Format: {fileFormat.toUpperCase()}
+                      </Badge>
+                      {sourceContent && targetContent && (
+                        <Badge variant="outline" className="border-green-500 text-green-700">
+                          Ready to Compare
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
