@@ -50,7 +50,36 @@ export class FileComparator {
     };
   }
 
+  private shouldIgnoreKey(path: string, key: string): boolean {
+    // Check if the key itself should be ignored
+    if (this.ignoreKeys.has(key)) {
+      return true;
+    }
+    
+    // Check if any part of the path should be ignored
+    const pathParts = path.split('.');
+    for (const part of pathParts) {
+      if (this.ignoreKeys.has(part)) {
+        return true;
+      }
+    }
+    
+    // Check if the full path should be ignored
+    const fullPath = path ? `${path}.${key}` : key;
+    if (this.ignoreKeys.has(fullPath)) {
+      return true;
+    }
+    
+    return false;
+  }
+
   private compareObjects(source: any, target: any, path: string, changes: ComparisonChange[]): void {
+    // Handle arrays specially
+    if (Array.isArray(source) || Array.isArray(target)) {
+      this.compareArrays(source, target, path, changes);
+      return;
+    }
+
     const sourceKeys = source && typeof source === 'object' ? Object.keys(source) : [];
     const targetKeys = target && typeof target === 'object' ? Object.keys(target) : [];
     const allKeys = new Set([...sourceKeys, ...targetKeys]);
@@ -58,8 +87,9 @@ export class FileComparator {
     for (const key of allKeys) {
       const currentPath = path ? `${path}.${key}` : key;
       
-      // Skip ignored keys
-      if (this.ignoreKeys.has(key)) {
+      // Skip ignored keys using improved logic
+      if (this.shouldIgnoreKey(path, key)) {
+        console.log(`Ignoring key: ${key} at path: ${path}`);
         continue;
       }
 
@@ -108,6 +138,51 @@ export class FileComparator {
     }
   }
 
+  private compareArrays(source: any[], target: any[], path: string, changes: ComparisonChange[]): void {
+    const sourceArray = Array.isArray(source) ? source : [];
+    const targetArray = Array.isArray(target) ? target : [];
+    
+    const maxLength = Math.max(sourceArray.length, targetArray.length);
+    
+    for (let i = 0; i < maxLength; i++) {
+      const currentPath = `${path}[${i}]`;
+      const sourceItem = sourceArray[i];
+      const targetItem = targetArray[i];
+      
+      if (sourceItem === undefined && targetItem !== undefined) {
+        // Addition
+        changes.push({
+          path: currentPath,
+          change_type: 'addition',
+          new_value: targetItem
+        });
+      } else if (sourceItem !== undefined && targetItem === undefined) {
+        // Deletion
+        changes.push({
+          path: currentPath,
+          change_type: 'deletion',
+          old_value: sourceItem
+        });
+      } else if (sourceItem !== undefined && targetItem !== undefined) {
+        if (!this.valuesEqual(sourceItem, targetItem)) {
+          if (typeof sourceItem === 'object' && typeof targetItem === 'object' && 
+              sourceItem !== null && targetItem !== null) {
+            // Compare objects recursively
+            this.compareObjects(sourceItem, targetItem, currentPath, changes);
+          } else {
+            // Different primitive values
+            changes.push({
+              path: currentPath,
+              change_type: 'modification',
+              old_value: sourceItem,
+              new_value: targetItem
+            });
+          }
+        }
+      }
+    }
+  }
+
   private valuesEqual(a: any, b: any): boolean {
     if (this.strictMode) {
       return JSON.stringify(a) === JSON.stringify(b);
@@ -147,8 +222,8 @@ export class FileComparator {
     });
     
     // Add diff markers with proper modification handling
-    const sourceDiff = this.addDiffMarkers(sourceLines, changes, 'source', changesByPath);
-    const targetDiff = this.addDiffMarkers(targetLines, changes, 'target', changesByPath);
+    const sourceDiff = this.addDiffMarkers(sourceLines, changes, 'source', changesByPath, format);
+    const targetDiff = this.addDiffMarkers(targetLines, changes, 'target', changesByPath, format);
     
     return {
       source: sourceDiff,
@@ -204,13 +279,32 @@ export class FileComparator {
     }
     
     if (Array.isArray(obj)) {
-      return obj.map(item => `${spaces}- ${this.objectToYAML(item, 0)}`).join('\n');
+      if (obj.length === 0) {
+        return '[]';
+      }
+      return obj.map(item => {
+        if (typeof item === 'object' && item !== null) {
+          const itemYaml = this.objectToYAML(item, indent + 1);
+          return `${spaces}- ${itemYaml.replace(/^\s+/, '')}`;
+        } else {
+          return `${spaces}- ${this.objectToYAML(item, 0)}`;
+        }
+      }).join('\n');
     }
     
     const entries = Object.entries(obj);
     return entries.map(([key, value]) => {
       if (typeof value === 'object' && value !== null) {
-        return `${spaces}${key}:\n${this.objectToYAML(value, indent + 1)}`;
+        if (Array.isArray(value)) {
+          if (value.length === 0) {
+            return `${spaces}${key}: []`;
+          }
+          const arrayYaml = this.objectToYAML(value, indent + 1);
+          return `${spaces}${key}:\n${arrayYaml}`;
+        } else {
+          const objectYaml = this.objectToYAML(value, indent + 1);
+          return `${spaces}${key}:\n${objectYaml}`;
+        }
       } else {
         return `${spaces}${key}: ${this.objectToYAML(value, 0)}`;
       }
@@ -221,7 +315,8 @@ export class FileComparator {
     lines: string[], 
     changes: ComparisonChange[], 
     side: 'source' | 'target',
-    changesByPath: Map<string, ComparisonChange>
+    changesByPath: Map<string, ComparisonChange>,
+    format: 'json' | 'xml' | 'yaml'
   ): string[] {
     const result: string[] = [];
     
@@ -231,29 +326,7 @@ export class FileComparator {
       
       // Find the change that affects this line
       const affectingChange = changes.find(change => {
-        const keyFromPath = change.path.split('.').pop() || '';
-        const lineContainsKey = line.includes(`"${keyFromPath}"`) || 
-                               line.includes(`${keyFromPath}:`) || 
-                               line.includes(`<${keyFromPath}>`);
-        
-        if (!lineContainsKey) return false;
-        
-        // Check if the line contains the relevant value
-        if (side === 'source') {
-          if (change.change_type === 'deletion') {
-            return change.old_value !== undefined && line.includes(String(change.old_value));
-          } else if (change.change_type === 'modification') {
-            return change.old_value !== undefined && line.includes(String(change.old_value));
-          }
-        } else if (side === 'target') {
-          if (change.change_type === 'addition') {
-            return change.new_value !== undefined && line.includes(String(change.new_value));
-          } else if (change.change_type === 'modification') {
-            return change.new_value !== undefined && line.includes(String(change.new_value));
-          }
-        }
-        
-        return false;
+        return this.lineMatchesChange(line, change, side, format);
       });
       
       if (affectingChange) {
@@ -271,5 +344,59 @@ export class FileComparator {
     }
     
     return result;
+  }
+
+  private lineMatchesChange(line: string, change: ComparisonChange, side: 'source' | 'target', format: 'json' | 'xml' | 'yaml'): boolean {
+    const pathParts = change.path.split('.');
+    const lastKey = pathParts[pathParts.length - 1];
+    
+    // Handle array indices
+    const arrayMatch = lastKey.match(/^(.+)\[(\d+)\]$/);
+    if (arrayMatch) {
+      const [, arrayKey, index] = arrayMatch;
+      
+      if (format === 'yaml') {
+        // For YAML arrays, look for the array key and the item
+        if (line.includes(`${arrayKey}:`)) {
+          return true;
+        }
+        // Check if this is an array item line
+        if (line.trim().startsWith('- ')) {
+          const value = side === 'source' ? change.old_value : change.new_value;
+          if (value !== undefined && line.includes(String(value))) {
+            return true;
+          }
+        }
+      } else if (format === 'json') {
+        // For JSON arrays, look for the value in the line
+        const value = side === 'source' ? change.old_value : change.new_value;
+        if (value !== undefined && line.includes(String(value))) {
+          return true;
+        }
+      }
+      return false;
+    }
+    
+    // Regular key matching
+    const keyFromPath = lastKey || '';
+    let lineContainsKey = false;
+    
+    if (format === 'json') {
+      lineContainsKey = line.includes(`"${keyFromPath}"`);
+    } else if (format === 'yaml') {
+      lineContainsKey = line.includes(`${keyFromPath}:`);
+    } else if (format === 'xml') {
+      lineContainsKey = line.includes(`<${keyFromPath}>`);
+    }
+    
+    if (!lineContainsKey) return false;
+    
+    // Check if the line contains the relevant value
+    const value = side === 'source' ? change.old_value : change.new_value;
+    if (value !== undefined) {
+      return line.includes(String(value));
+    }
+    
+    return true;
   }
 }

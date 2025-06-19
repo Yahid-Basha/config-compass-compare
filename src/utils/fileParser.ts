@@ -30,34 +30,93 @@ export class FileParser {
 
   static parseYAML(content: string): ParsedData {
     try {
-      // Simple YAML parser for basic structures
+      // Enhanced YAML parser for better array and object handling
       const lines = content.split('\n').filter(line => line.trim() && !line.trim().startsWith('#'));
       const result: ParsedData = {};
-      const stack: Array<{ obj: ParsedData; indent: number }> = [{ obj: result, indent: -1 }];
+      const stack: Array<{ obj: ParsedData | any[], indent: number, isArray: boolean }> = [
+        { obj: result, indent: -1, isArray: false }
+      ];
       
-      for (const line of lines) {
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
         const indent = line.length - line.trimStart().length;
         const trimmed = line.trim();
         
-        if (!trimmed.includes(':')) continue;
-        
-        const [key, ...valueParts] = trimmed.split(':');
-        const value = valueParts.join(':').trim();
-        
-        // Pop stack until we find the right parent
-        while (stack.length > 1 && stack[stack.length - 1].indent >= indent) {
-          stack.pop();
+        // Handle array items
+        if (trimmed.startsWith('- ')) {
+          const value = trimmed.substring(2).trim();
+          
+          // Pop stack until we find the right parent
+          while (stack.length > 1 && stack[stack.length - 1].indent >= indent) {
+            stack.pop();
+          }
+          
+          const parent = stack[stack.length - 1];
+          
+          if (!Array.isArray(parent.obj)) {
+            // Convert to array if needed
+            const lastKey = this.getLastKey(stack);
+            if (lastKey && typeof parent.obj === 'object') {
+              parent.obj[lastKey] = [];
+              stack.push({ obj: parent.obj[lastKey], indent, isArray: true });
+            }
+          }
+          
+          const currentArray = stack[stack.length - 1].obj as any[];
+          
+          if (value.includes(':')) {
+            // This is an object item in the array
+            const itemObj = {};
+            currentArray.push(itemObj);
+            
+            const [key, ...valueParts] = value.split(':');
+            const itemValue = valueParts.join(':').trim();
+            
+            if (itemValue) {
+              itemObj[key.trim()] = this.parseValue(itemValue);
+            } else {
+              // Multi-line object in array
+              stack.push({ obj: itemObj, indent: indent + 2, isArray: false });
+            }
+          } else {
+            // Simple array item
+            currentArray.push(this.parseValue(value));
+          }
+          continue;
         }
         
-        const parent = stack[stack.length - 1].obj;
-        
-        if (value === '' || value === null) {
-          // This is a parent object
-          parent[key.trim()] = {};
-          stack.push({ obj: parent[key.trim()], indent });
-        } else {
-          // This is a value
-          parent[key.trim()] = this.parseValue(value);
+        // Handle key-value pairs
+        if (trimmed.includes(':')) {
+          const [key, ...valueParts] = trimmed.split(':');
+          const value = valueParts.join(':').trim();
+          
+          // Pop stack until we find the right parent
+          while (stack.length > 1 && stack[stack.length - 1].indent >= indent) {
+            stack.pop();
+          }
+          
+          const parent = stack[stack.length - 1];
+          const parentObj = Array.isArray(parent.obj) ? parent.obj[parent.obj.length - 1] : parent.obj;
+          
+          if (value === '' || value === null) {
+            // Check if next line is an array
+            const nextLine = i + 1 < lines.length ? lines[i + 1] : '';
+            const nextIndent = nextLine.length - nextLine.trimStart().length;
+            const nextTrimmed = nextLine.trim();
+            
+            if (nextTrimmed.startsWith('- ')) {
+              // This is an array
+              parentObj[key.trim()] = [];
+              stack.push({ obj: parentObj[key.trim()], indent, isArray: true });
+            } else {
+              // This is a parent object
+              parentObj[key.trim()] = {};
+              stack.push({ obj: parentObj[key.trim()], indent, isArray: false });
+            }
+          } else {
+            // This is a value
+            parentObj[key.trim()] = this.parseValue(value);
+          }
         }
       }
       
@@ -65,6 +124,24 @@ export class FileParser {
     } catch (error) {
       throw new Error(`Invalid YAML format: ${error.message}`);
     }
+  }
+
+  private static getLastKey(stack: Array<{ obj: ParsedData | any[], indent: number, isArray: boolean }>): string | null {
+    // Find the last key that was added to create the current context
+    for (let i = stack.length - 2; i >= 0; i--) {
+      const parent = stack[i];
+      const current = stack[i + 1];
+      
+      if (typeof parent.obj === 'object' && !Array.isArray(parent.obj)) {
+        const keys = Object.keys(parent.obj);
+        for (const key of keys) {
+          if (parent.obj[key] === current.obj) {
+            return key;
+          }
+        }
+      }
+    }
+    return null;
   }
 
   private static xmlToObject(element: Element): ParsedData {
