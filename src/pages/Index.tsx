@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import FileUploader from '@/components/FileUploader';
 import DiffViewer from '@/components/DiffViewer';
 import SummaryPanel from '@/components/SummaryPanel';
+import FilePreview from '@/components/FilePreview';
 import { FileParser } from '@/utils/fileParser';
 import { FileComparator, ComparisonResult } from '@/utils/fileComparator';
 import { FormatDetector } from '@/utils/formatDetector';
@@ -298,6 +299,15 @@ const Index = () => {
                   </div>
                 </TabsContent>
               </Tabs>
+
+              {/* File Preview Component */}
+              <FilePreview
+                sourceContent={sourceContent}
+                targetContent={targetContent}
+                sourceFile={sourceFile}
+                targetFile={targetFile}
+                detectedFormat={fileFormat}
+              />
 
               <Separator className="my-8" />
 
