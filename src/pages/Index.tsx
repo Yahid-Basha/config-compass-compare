@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Upload, FileText, Eye, Download, Bell, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -75,11 +74,95 @@ const Index = () => {
     return 'yaml';
   };
 
+  const generateMockDiffForFormat = (format: 'json' | 'xml' | 'yaml') => {
+    if (format === 'json') {
+      return {
+        source: [
+          '{',
+          '  "database": {',
+          '-    "host": "localhost",',
+          '     "port": 5432',
+          '  },',
+          '  "features": {',
+          '     "authentication": true',
+          '  },',
+          '-  "deprecated": {',
+          '-    "oldSetting": "removed"',
+          '-  }'
+        ],
+        target: [
+          '{',
+          '  "database": {',
+          '+    "host": "prod-db.example.com",',
+          '     "port": 5432',
+          '  },',
+          '  "features": {',
+          '     "authentication": true,',
+          '+    "newFeature": true',
+          '  }',
+          '}'
+        ]
+      };
+    } else if (format === 'xml') {
+      return {
+        source: [
+          '<?xml version="1.0" encoding="UTF-8"?>',
+          '<configuration>',
+          '  <database>',
+          '-    <host>localhost</host>',
+          '     <port>5432</port>',
+          '  </database>',
+          '  <features>',
+          '     <authentication>true</authentication>',
+          '  </features>',
+          '-  <deprecated>',
+          '-    <oldSetting>removed</oldSetting>',
+          '-  </deprecated>',
+          '</configuration>'
+        ],
+        target: [
+          '<?xml version="1.0" encoding="UTF-8"?>',
+          '<configuration>',
+          '  <database>',
+          '+    <host>prod-db.example.com</host>',
+          '     <port>5432</port>',
+          '  </database>',
+          '  <features>',
+          '     <authentication>true</authentication>',
+          '+    <newFeature>true</newFeature>',
+          '  </features>',
+          '</configuration>'
+        ]
+      };
+    } else { // yaml
+      return {
+        source: [
+          'database:',
+          '-  host: localhost',
+          '   port: 5432',
+          'features:',
+          '   authentication: true',
+          '-deprecated:',
+          '-  oldSetting: removed'
+        ],
+        target: [
+          'database:',
+          '+  host: prod-db.example.com',
+          '   port: 5432',
+          'features:',
+          '   authentication: true',
+          '+  newFeature: true'
+        ]
+      };
+    }
+  };
+
   const mockCompareFiles = async (): Promise<ComparisonResult> => {
     // Simulate API call delay
     await new Promise(resolve => setTimeout(resolve, 1500));
 
-    // Mock comparison result for demonstration
+    const mockDiff = generateMockDiffForFormat(fileFormat);
+
     return {
       summary: {
         additions: 3,
@@ -104,30 +187,7 @@ const Index = () => {
           old_value: 'removed'
         }
       ],
-      formatted_diff: {
-        source: [
-          '  "database": {',
-          '-   "host": "localhost",',
-          '    "port": 5432',
-          '  },',
-          '  "features": {',
-          '    "authentication": true',
-          '  },',
-          '-  "deprecated": {',
-          '-    "oldSetting": "removed"',
-          '-  }'
-        ],
-        target: [
-          '  "database": {',
-          '+   "host": "prod-db.example.com",',
-          '    "port": 5432',
-          '  },',
-          '  "features": {',
-          '    "authentication": true,',
-          '+   "newFeature": true',
-          '  }'
-        ]
-      }
+      formatted_diff: mockDiff
     };
   };
 

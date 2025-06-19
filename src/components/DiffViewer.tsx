@@ -17,9 +17,9 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ sourceLines, targetLines, forma
   const [selectedSide, setSelectedSide] = useState<'source' | 'target' | 'both'>('both');
 
   const getLineType = (line: string): 'added' | 'removed' | 'changed' | 'normal' => {
-    if (line.startsWith('+')) return 'added';
-    if (line.startsWith('-')) return 'removed';
-    if (line.includes('~')) return 'changed';
+    if (line.startsWith('+') && !line.startsWith('++')) return 'added';
+    if (line.startsWith('-') && !line.startsWith('--')) return 'removed';
+    if (line.startsWith('~') || line.includes('→')) return 'changed';
     return 'normal';
   };
 
@@ -36,6 +36,62 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ sourceLines, targetLines, forma
     }
   };
 
+  // Process lines to identify modifications properly
+  const processLinesForModifications = (lines: string[]) => {
+    const processedLines: string[] = [];
+    const lineMap = new Map<number, string>();
+    
+    // First pass: collect all lines
+    lines.forEach((line, index) => {
+      lineMap.set(index, line);
+    });
+
+    // Second pass: identify modifications
+    for (let i = 0; i < lines.length; i++) {
+      const currentLine = lines[i];
+      const nextLine = lines[i + 1];
+      
+      // Check if current line is a removal and next line is an addition (potential modification)
+      if (currentLine.startsWith('-') && nextLine && nextLine.startsWith('+')) {
+        const removedContent = currentLine.substring(1).trim();
+        const addedContent = nextLine.substring(1).trim();
+        
+        // If the line structure is similar, treat as modification
+        if (areLinesRelated(removedContent, addedContent)) {
+          processedLines.push(`~ ${addedContent} (was: ${removedContent})`);
+          i++; // Skip the next line since we've processed it
+          continue;
+        }
+      }
+      
+      processedLines.push(currentLine);
+    }
+    
+    return processedLines;
+  };
+
+  const areLinesRelated = (line1: string, line2: string): boolean => {
+    // Check if lines have similar structure (same key but different value)
+    const key1 = extractKey(line1);
+    const key2 = extractKey(line2);
+    return key1 && key2 && key1 === key2;
+  };
+
+  const extractKey = (line: string): string | null => {
+    // Extract key from different formats
+    if (format === 'json') {
+      const match = line.match(/"([^"]+)"\s*:/);
+      return match ? match[1] : null;
+    } else if (format === 'yaml') {
+      const match = line.match(/^(\s*)([^:]+):/);
+      return match ? match[2].trim() : null;
+    } else if (format === 'xml') {
+      const match = line.match(/<([^>\s]+)(?:\s|>)/);
+      return match ? match[1] : null;
+    }
+    return null;
+  };
+
   const copyToClipboard = (content: string[], side: string) => {
     const text = content.join('\n');
     navigator.clipboard.writeText(text);
@@ -45,7 +101,8 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ sourceLines, targetLines, forma
   const renderCodeLines = (lines: string[], title: string, side: 'source' | 'target') => {
     if (selectedSide !== 'both' && selectedSide !== side) return null;
 
-    const changeCount = lines.filter(line => getLineType(line) !== 'normal').length;
+    const processedLines = processLinesForModifications(lines);
+    const changeCount = processedLines.filter(line => getLineType(line) !== 'normal').length;
 
     return (
       <div className={`${selectedSide === 'both' ? 'w-1/2' : 'w-full'} ${selectedSide === 'both' ? 'pr-2' : ''}`}>
@@ -53,7 +110,7 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ sourceLines, targetLines, forma
           <div className="flex items-center gap-3">
             <h3 className="font-semibold text-lg">{title}</h3>
             <Badge variant="outline" className="text-xs">
-              {lines.length} lines
+              {processedLines.length} lines
             </Badge>
             {changeCount > 0 && (
               <Badge className="bg-[#EE001E] text-white text-xs">
@@ -64,7 +121,7 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ sourceLines, targetLines, forma
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => copyToClipboard(lines, title)}
+            onClick={() => copyToClipboard(processedLines, title)}
             className="text-gray-500 hover:text-gray-700"
           >
             <Copy className="h-4 w-4" />
@@ -74,9 +131,18 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ sourceLines, targetLines, forma
         <div className="bg-white border rounded-lg overflow-hidden">
           <div className="max-h-96 overflow-y-auto">
             <pre className="text-sm">
-              {lines.map((line, index) => {
+              {processedLines.map((line, index) => {
                 const lineType = getLineType(line);
-                const cleanLine = line.replace(/^[+-~]\s*/, '');
+                let cleanLine = line;
+                
+                // Clean the line based on type and format
+                if (lineType === 'added') {
+                  cleanLine = line.substring(1).trim();
+                } else if (lineType === 'removed') {
+                  cleanLine = line.substring(1).trim();
+                } else if (lineType === 'changed') {
+                  cleanLine = line.substring(1).trim();
+                }
                 
                 return (
                   <div
