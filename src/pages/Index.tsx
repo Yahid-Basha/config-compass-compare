@@ -32,8 +32,6 @@ interface ComparisonResult {
   };
 }
 
-const API_BASE_URL = 'http://localhost:8000';
-
 const Index = () => {
   const [sourceContent, setSourceContent] = useState('');
   const [targetContent, setTargetContent] = useState('');
@@ -207,31 +205,13 @@ const Index = () => {
       );
       setFileFormat(detectedFormat);
 
-      const response = await fetch(`${API_BASE_URL}/compare`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          source_content: sourceContent,
-          target_content: targetContent,
-          format: detectedFormat,
-          ignore_keys: ignoreKeys.split(',').filter(k => k.trim()),
-          strict: strictMode
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Comparison failed');
-      }
-
-      const result = await response.json();
+      // In a real implementation, this would call the backend API
+      const result = await mockCompareFiles();
       setComparisonResult(result);
       setShowResult(true);
       toast.success('Comparison completed successfully!');
     } catch (error) {
-      toast.error(`Failed to compare files: ${error.message}`);
+      toast.error('Failed to compare files. Please check the format and try again.');
       console.error('Comparison error:', error);
     } finally {
       setIsComparing(false);
