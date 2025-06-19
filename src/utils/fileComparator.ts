@@ -95,7 +95,7 @@ export class FileComparator {
             // Both are objects, compare recursively
             this.compareObjects(sourceValue, targetValue, currentPath, changes);
           } else {
-            // Different primitive values
+            // Different primitive values - this is a modification
             changes.push({
               path: currentPath,
               change_type: 'modification',
@@ -141,14 +141,14 @@ export class FileComparator {
     const targetLines = this.formatData(targetData, format).split('\n');
     
     // Create change maps for quick lookup
-    const changeMap = new Map<string, ComparisonChange>();
+    const changesByPath = new Map<string, ComparisonChange>();
     changes.forEach(change => {
-      changeMap.set(change.path, change);
+      changesByPath.set(change.path, change);
     });
     
-    // Add diff markers
-    const sourceDiff = this.addDiffMarkers(sourceLines, changes, 'source');
-    const targetDiff = this.addDiffMarkers(targetLines, changes, 'target');
+    // Add diff markers with proper modification handling
+    const sourceDiff = this.addDiffMarkers(sourceLines, changes, 'source', changesByPath);
+    const targetDiff = this.addDiffMarkers(targetLines, changes, 'target', changesByPath);
     
     return {
       source: sourceDiff,
@@ -217,42 +217,53 @@ export class FileComparator {
     }).join('\n');
   }
 
-  private addDiffMarkers(lines: string[], changes: ComparisonChange[], side: 'source' | 'target'): string[] {
+  private addDiffMarkers(
+    lines: string[], 
+    changes: ComparisonChange[], 
+    side: 'source' | 'target',
+    changesByPath: Map<string, ComparisonChange>
+  ): string[] {
     const result: string[] = [];
     
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       let marker = ' '; // Default: no change
       
-      // Simple heuristic to match lines with changes
-      // In a real implementation, you'd want more sophisticated line matching
-      const hasChange = changes.some(change => {
-        if (side === 'source' && (change.change_type === 'deletion' || change.change_type === 'modification')) {
-          return line.includes(String(change.old_value)) || line.includes(change.path.split('.').pop() || '');
-        } else if (side === 'target' && (change.change_type === 'addition' || change.change_type === 'modification')) {
-          return line.includes(String(change.new_value)) || line.includes(change.path.split('.').pop() || '');
+      // Find the change that affects this line
+      const affectingChange = changes.find(change => {
+        const keyFromPath = change.path.split('.').pop() || '';
+        const lineContainsKey = line.includes(`"${keyFromPath}"`) || 
+                               line.includes(`${keyFromPath}:`) || 
+                               line.includes(`<${keyFromPath}>`);
+        
+        if (!lineContainsKey) return false;
+        
+        // Check if the line contains the relevant value
+        if (side === 'source') {
+          if (change.change_type === 'deletion') {
+            return change.old_value !== undefined && line.includes(String(change.old_value));
+          } else if (change.change_type === 'modification') {
+            return change.old_value !== undefined && line.includes(String(change.old_value));
+          }
+        } else if (side === 'target') {
+          if (change.change_type === 'addition') {
+            return change.new_value !== undefined && line.includes(String(change.new_value));
+          } else if (change.change_type === 'modification') {
+            return change.new_value !== undefined && line.includes(String(change.new_value));
+          }
         }
+        
         return false;
       });
       
-      if (hasChange) {
-        const change = changes.find(c => {
-          if (side === 'source' && (c.change_type === 'deletion' || c.change_type === 'modification')) {
-            return line.includes(String(c.old_value)) || line.includes(c.path.split('.').pop() || '');
-          } else if (side === 'target' && (c.change_type === 'addition' || c.change_type === 'modification')) {
-            return line.includes(String(c.new_value)) || line.includes(c.path.split('.').pop() || '');
-          }
-          return false;
-        });
-        
-        if (change) {
-          if (change.change_type === 'addition' && side === 'target') {
-            marker = '+';
-          } else if (change.change_type === 'deletion' && side === 'source') {
-            marker = '-';
-          } else if (change.change_type === 'modification') {
-            marker = side === 'source' ? '-' : '+';
-          }
+      if (affectingChange) {
+        if (affectingChange.change_type === 'addition' && side === 'target') {
+          marker = '+';
+        } else if (affectingChange.change_type === 'deletion' && side === 'source') {
+          marker = '-';
+        } else if (affectingChange.change_type === 'modification') {
+          // Use special marker for modifications
+          marker = '~';
         }
       }
       

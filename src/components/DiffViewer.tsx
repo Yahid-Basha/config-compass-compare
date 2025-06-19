@@ -15,20 +15,20 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ sourceLines, targetLines, forma
   const [isExpanded, setIsExpanded] = useState(true);
   const [selectedSide, setSelectedSide] = useState<'source' | 'target' | 'both'>('both');
 
-  const getLineType = (line: string): 'added' | 'removed' | 'changed' | 'normal' => {
+  const getLineType = (line: string): 'added' | 'removed' | 'modified' | 'normal' => {
     if (line.startsWith('+') && !line.startsWith('++')) return 'added';
     if (line.startsWith('-') && !line.startsWith('--')) return 'removed';
-    if (line.startsWith('~') || line.includes('→')) return 'changed';
+    if (line.startsWith('~') || line.startsWith('!')) return 'modified';
     return 'normal';
   };
 
-  const getLineStyles = (type: 'added' | 'removed' | 'changed' | 'normal'): string => {
+  const getLineStyles = (type: 'added' | 'removed' | 'modified' | 'normal'): string => {
     switch (type) {
       case 'added':
         return 'bg-green-50 border-l-4 border-green-500 text-green-800';
       case 'removed':
         return 'bg-red-50 border-l-4 border-red-500 text-red-800';
-      case 'changed':
+      case 'modified':
         return 'bg-orange-50 border-l-4 border-orange-500 text-orange-800';
       default:
         return 'bg-gray-50 border-l-4 border-transparent';
@@ -37,7 +37,7 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ sourceLines, targetLines, forma
 
   const extractKey = (line: string): string | null => {
     // Remove diff prefixes first
-    const cleanLine = line.replace(/^[+-~]\s*/, '').trim();
+    const cleanLine = line.replace(/^[+\-~!\s]*/, '').trim();
     
     if (format === 'json') {
       const match = cleanLine.match(/"([^"]+)"\s*:/);
@@ -53,7 +53,7 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ sourceLines, targetLines, forma
   };
 
   const extractValue = (line: string): string | null => {
-    const cleanLine = line.replace(/^[+-~]\s*/, '').trim();
+    const cleanLine = line.replace(/^[+\-~!\s]*/, '').trim();
     
     if (format === 'json') {
       const match = cleanLine.match(/"[^"]+"\s*:\s*(.+?)(?:,\s*$|$)/);
@@ -68,57 +68,77 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ sourceLines, targetLines, forma
     return null;
   };
 
-  const processLinesForModifications = (lines: string[]) => {
-    const processedLines: string[] = [];
-    const removedLines: { index: number; line: string; key: string | null; value: string | null }[] = [];
+  const processLinesForModifications = (sourceLines: string[], targetLines: string[]) => {
+    const processedSource: string[] = [];
+    const processedTarget: string[] = [];
     
-    for (let i = 0; i < lines.length; i++) {
-      const currentLine = lines[i];
-      
-      if (currentLine.startsWith('-') && !currentLine.startsWith('--')) {
-        // Store removed line for potential modification detection
-        const key = extractKey(currentLine);
-        const value = extractValue(currentLine);
-        removedLines.push({ index: i, line: currentLine, key, value });
-        continue;
-      }
-      
-      if (currentLine.startsWith('+') && !currentLine.startsWith('++')) {
-        // Check if this addition matches a recent removal (modification)
-        const addedKey = extractKey(currentLine);
-        const addedValue = extractValue(currentLine);
-        
-        // Look for a matching removed line with same key but different value
-        const matchingRemovedIndex = removedLines.findIndex(removed => 
-          removed.key && addedKey && 
-          removed.key === addedKey && 
-          removed.value !== addedValue
-        );
-        
-        if (matchingRemovedIndex !== -1) {
-          // Found a modification - replace the removed line with a changed line
-          const removedLine = removedLines[matchingRemovedIndex];
-          const modifiedLine = `~ ${currentLine.substring(1)} (was: ${removedLine.value})`;
-          processedLines.push(modifiedLine);
-          removedLines.splice(matchingRemovedIndex, 1);
-        } else {
-          // Add any remaining removed lines that didn't match
-          removedLines.forEach(removed => processedLines.push(removed.line));
-          removedLines.length = 0;
-          processedLines.push(currentLine);
+    // Create maps to track modifications
+    const sourceRemovals = new Map<string, { line: string; index: number; value: string | null }>();
+    const targetAdditions = new Map<string, { line: string; index: number; value: string | null }>();
+    
+    // First pass: identify potential modifications
+    sourceLines.forEach((line, index) => {
+      if (line.startsWith('-') && !line.startsWith('--')) {
+        const key = extractKey(line);
+        const value = extractValue(line);
+        if (key) {
+          sourceRemovals.set(key, { line, index, value });
         }
-      } else {
-        // Add any remaining removed lines that didn't match
-        removedLines.forEach(removed => processedLines.push(removed.line));
-        removedLines.length = 0;
-        processedLines.push(currentLine);
+      }
+    });
+    
+    targetLines.forEach((line, index) => {
+      if (line.startsWith('+') && !line.startsWith('++')) {
+        const key = extractKey(line);
+        const value = extractValue(line);
+        if (key) {
+          targetAdditions.set(key, { line, index, value });
+        }
+      }
+    });
+    
+    // Find modifications (same key, different value)
+    const modifications = new Set<string>();
+    for (const [key, sourceData] of sourceRemovals) {
+      const targetData = targetAdditions.get(key);
+      if (targetData && sourceData.value !== targetData.value) {
+        modifications.add(key);
       }
     }
     
-    // Add any remaining removed lines
-    removedLines.forEach(removed => processedLines.push(removed.line));
+    // Process source lines
+    sourceLines.forEach((line, index) => {
+      if (line.startsWith('-') && !line.startsWith('--')) {
+        const key = extractKey(line);
+        if (key && modifications.has(key)) {
+          // This is a modification, mark with ~
+          processedSource.push('~' + line.substring(1));
+        } else {
+          // This is a deletion
+          processedSource.push(line);
+        }
+      } else {
+        processedSource.push(line);
+      }
+    });
     
-    return processedLines;
+    // Process target lines
+    targetLines.forEach((line, index) => {
+      if (line.startsWith('+') && !line.startsWith('++')) {
+        const key = extractKey(line);
+        if (key && modifications.has(key)) {
+          // This is a modification, mark with ~
+          processedTarget.push('~' + line.substring(1));
+        } else {
+          // This is an addition
+          processedTarget.push(line);
+        }
+      } else {
+        processedTarget.push(line);
+      }
+    });
+    
+    return { processedSource, processedTarget };
   };
 
   const copyToClipboard = (content: string[], side: string) => {
@@ -130,7 +150,10 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ sourceLines, targetLines, forma
   const renderCodeLines = (lines: string[], title: string, side: 'source' | 'target') => {
     if (selectedSide !== 'both' && selectedSide !== side) return null;
 
-    const processedLines = processLinesForModifications(lines);
+    // Process lines to identify modifications
+    const { processedSource, processedTarget } = processLinesForModifications(sourceLines, targetLines);
+    const processedLines = side === 'source' ? processedSource : processedTarget;
+    
     const changeCount = processedLines.filter(line => getLineType(line) !== 'normal').length;
 
     return (
@@ -163,14 +186,21 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ sourceLines, targetLines, forma
               {processedLines.map((line, index) => {
                 const lineType = getLineType(line);
                 let cleanLine = line;
+                let prefix = '';
                 
-                // Clean the line based on type and format
+                // Clean the line and extract prefix based on type
                 if (lineType === 'added') {
-                  cleanLine = line.substring(1).trim();
+                  cleanLine = line.substring(1);
+                  prefix = '+ ';
                 } else if (lineType === 'removed') {
-                  cleanLine = line.substring(1).trim();
-                } else if (lineType === 'changed') {
-                  cleanLine = line.substring(1).trim();
+                  cleanLine = line.substring(1);
+                  prefix = '- ';
+                } else if (lineType === 'modified') {
+                  cleanLine = line.substring(1);
+                  prefix = '~ ';
+                } else {
+                  cleanLine = line.startsWith(' ') ? line.substring(1) : line;
+                  prefix = '  ';
                 }
                 
                 return (
@@ -180,6 +210,9 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ sourceLines, targetLines, forma
                   >
                     <span className="w-12 text-xs text-gray-400 flex-shrink-0 select-none">
                       {index + 1}
+                    </span>
+                    <span className="w-6 text-xs flex-shrink-0 select-none font-mono">
+                      {prefix}
                     </span>
                     <code className="flex-1 font-mono whitespace-pre-wrap break-all">
                       {cleanLine}
