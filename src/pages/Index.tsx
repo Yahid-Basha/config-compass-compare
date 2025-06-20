@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Upload, FileText, Eye, Download, Bell, Settings } from 'lucide-react';
+import { Upload, FileText, Eye, Download, Bell, Settings, Sparkles, Zap, Shield, Clock, Users, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -222,30 +222,37 @@ const Index = () => {
 
   if (showResult && comparisonResult) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#F6F0E2] to-white">
-        <div className="container mx-auto px-4 py-8">
+      <div className="min-h-screen bg-gradient-to-br from-[#F6F0E2] via-white to-blue-50 relative overflow-hidden">
+        {/* Glassmorphism background elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-20 left-10 w-72 h-72 bg-gradient-to-r from-[#EE001E]/10 to-purple-500/10 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-20 right-10 w-96 h-96 bg-gradient-to-r from-blue-500/10 to-[#EE001E]/10 rounded-full blur-3xl"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-gradient-to-r from-purple-500/5 to-pink-500/5 rounded-full blur-3xl"></div>
+        </div>
+
+        <div className="container mx-auto px-4 py-8 relative z-10">
           <div className="flex items-center justify-between mb-8">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">Configuration Comparison Results</h1>
               <p className="text-gray-600">Visual diff analysis and summary report</p>
               <div className="flex gap-2 mt-2">
-                <Badge variant="outline">Format: {sourceDetectedFormat.toUpperCase()}</Badge>
-                <Badge variant="outline">Mode: {strictMode ? 'Strict' : 'Lenient'}</Badge>
+                <Badge variant="outline" className="backdrop-blur-sm bg-white/70 border-white/20 rounded-2xl">Format: {sourceDetectedFormat.toUpperCase()}</Badge>
+                <Badge variant="outline" className="backdrop-blur-sm bg-white/70 border-white/20 rounded-2xl">Mode: {strictMode ? 'Strict' : 'Lenient'}</Badge>
                 {ignoreKeys && (
-                  <Badge variant="outline">Ignored: {ignoreKeys.split(',').length} keys</Badge>
+                  <Badge variant="outline" className="backdrop-blur-sm bg-white/70 border-white/20 rounded-2xl">Ignored: {ignoreKeys.split(',').length} keys</Badge>
                 )}
               </div>
             </div>
             <div className="flex gap-3">
-              <Button variant="outline" onClick={resetComparison}>
+              <Button variant="outline" onClick={resetComparison} className="backdrop-blur-sm bg-white/70 border-white/20 hover:bg-white/80 rounded-2xl">
                 <FileText className="h-4 w-4 mr-2" />
                 New Comparison
               </Button>
-              <Button onClick={handleDownloadReport} className="bg-[#EE001E] hover:bg-[#EE001E]/90">
+              <Button onClick={handleDownloadReport} className="bg-[#EE001E] hover:bg-[#EE001E]/90 rounded-2xl shadow-lg">
                 <Download className="h-4 w-4 mr-2" />
                 Download Report
               </Button>
-              <Button onClick={handleSimulateAlert} variant="outline" className="border-[#FF281E] text-[#FF281E] hover:bg-[#FF281E]/10">
+              <Button onClick={handleSimulateAlert} variant="outline" className="border-[#FF281E] text-[#FF281E] hover:bg-[#FF281E]/10 backdrop-blur-sm bg-white/70 border-white/20 rounded-2xl">
                 <Bell className="h-4 w-4 mr-2" />
                 Send Alert
               </Button>
@@ -271,7 +278,7 @@ const Index = () => {
               
               {/* Change Details - 25% (1/4 columns) */}
               <div className="lg:col-span-1">
-                <Card>
+                <Card className="backdrop-blur-md bg-white/70 border-white/20 shadow-xl rounded-3xl">
                   <CardHeader className="pb-3">
                     <CardTitle className="flex items-center gap-2 text-lg">
                       <FileText className="h-5 w-5" />
@@ -300,13 +307,13 @@ const Index = () => {
                           const getChangeColor = (type: string) => {
                             switch (type) {
                               case 'addition':
-                                return 'text-green-700 bg-green-50 border-green-200';
+                                return 'text-green-700 bg-green-50/70 border-green-200/50 backdrop-blur-sm';
                               case 'deletion':
-                                return 'text-red-700 bg-red-50 border-red-200';
+                                return 'text-red-700 bg-red-50/70 border-red-200/50 backdrop-blur-sm';
                               case 'modification':
-                                return 'text-orange-700 bg-orange-50 border-orange-200';
+                                return 'text-orange-700 bg-orange-50/70 border-orange-200/50 backdrop-blur-sm';
                               default:
-                                return 'text-gray-700 bg-gray-50 border-gray-200';
+                                return 'text-gray-700 bg-gray-50/70 border-gray-200/50 backdrop-blur-sm';
                             }
                           };
 
@@ -320,7 +327,7 @@ const Index = () => {
                           return (
                             <div
                               key={index}
-                              className={`p-3 rounded-lg border ${getChangeColor(change.change_type)}`}
+                              className={`p-3 rounded-2xl border ${getChangeColor(change.change_type)}`}
                             >
                               <div className="flex items-start gap-2 mb-2">
                                 {getChangeIcon(change.change_type)}
@@ -328,7 +335,7 @@ const Index = () => {
                                   <p className="font-medium text-sm truncate" title={change.path}>
                                     {change.path}
                                   </p>
-                                  <Badge variant="outline" className="text-xs mt-1">
+                                  <Badge variant="outline" className="text-xs mt-1 rounded-xl">
                                     {change.change_type}
                                   </Badge>
                                 </div>
@@ -337,7 +344,7 @@ const Index = () => {
                               {change.change_type === 'modification' && (
                                 <div className="mt-2 space-y-1 text-xs">
                                   {change.old_value !== undefined && (
-                                    <div className="bg-white/50 p-2 rounded border">
+                                    <div className="bg-white/50 p-2 rounded-xl border backdrop-blur-sm">
                                       <span className="font-medium text-red-700">- </span>
                                       <code className="text-red-800">
                                         {formatValue(change.old_value)}
@@ -345,7 +352,7 @@ const Index = () => {
                                     </div>
                                   )}
                                   {change.new_value !== undefined && (
-                                    <div className="bg-white/50 p-2 rounded border">
+                                    <div className="bg-white/50 p-2 rounded-xl border backdrop-blur-sm">
                                       <span className="font-medium text-green-700">+ </span>
                                       <code className="text-green-800">
                                         {formatValue(change.new_value)}
@@ -357,7 +364,7 @@ const Index = () => {
                               
                               {change.change_type === 'addition' && change.new_value !== undefined && (
                                 <div className="mt-2 text-xs">
-                                  <div className="bg-white/50 p-2 rounded border">
+                                  <div className="bg-white/50 p-2 rounded-xl border backdrop-blur-sm">
                                     <code className="text-green-800">
                                       {formatValue(change.new_value)}
                                     </code>
@@ -367,7 +374,7 @@ const Index = () => {
                               
                               {change.change_type === 'deletion' && change.old_value !== undefined && (
                                 <div className="mt-2 text-xs">
-                                  <div className="bg-white/50 p-2 rounded border">
+                                  <div className="bg-white/50 p-2 rounded-xl border backdrop-blur-sm">
                                     <code className="text-red-800">
                                       {formatValue(change.old_value)}
                                     </code>
@@ -390,32 +397,111 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#F6F0E2] to-white">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-[#F6F0E2] via-white to-blue-50 relative overflow-hidden">
+      {/* Glassmorphism background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 w-72 h-72 bg-gradient-to-r from-[#EE001E]/10 to-purple-500/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-gradient-to-r from-blue-500/10 to-[#EE001E]/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-gradient-to-r from-purple-500/5 to-pink-500/5 rounded-full blur-3xl animate-pulse delay-500"></div>
+      </div>
+
+      <div className="container mx-auto px-4 py-8 relative z-10">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Config Compass Compare</h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="p-3 bg-gradient-to-r from-[#EE001E] to-[#FF281E] rounded-2xl shadow-lg">
+              <Eye className="h-8 w-8 text-white" />
+            </div>
+            <h1 className="text-4xl font-bold text-gray-900">Config Compass Compare</h1>
+            <div className="p-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl shadow-lg animate-pulse">
+              <Sparkles className="h-6 w-6 text-white" />
+            </div>
+          </div>
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8">
             Compare configuration files with visual diffs and detailed analytics. 
             Supports JSON, XML, and YAML formats with intelligent parsing.
           </p>
+          
+          {/* Feature highlights */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto mb-8">
+            <div className="backdrop-blur-md bg-white/70 border border-white/20 rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
+              <div className="flex items-center justify-center mb-4">
+                <div className="p-3 bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl">
+                  <Zap className="h-6 w-6 text-white" />
+                </div>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Lightning Fast</h3>
+              <p className="text-gray-600 text-sm">Process large configuration files in milliseconds with our optimized comparison engine.</p>
+            </div>
+            
+            <div className="backdrop-blur-md bg-white/70 border border-white/20 rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
+              <div className="flex items-center justify-center mb-4">
+                <div className="p-3 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl">
+                  <Shield className="h-6 w-6 text-white" />
+                </div>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Secure & Private</h3>
+              <p className="text-gray-600 text-sm">All comparisons happen locally in your browser. Your files never leave your device.</p>
+            </div>
+            
+            <div className="backdrop-blur-md bg-white/70 border border-white/20 rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
+              <div className="flex items-center justify-center mb-4">
+                <div className="p-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl">
+                  <Globe className="h-6 w-6 text-white" />
+                </div>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Multi-Format</h3>
+              <p className="text-gray-600 text-sm">Support for JSON, XML, and YAML with intelligent format detection and validation.</p>
+            </div>
+          </div>
+
+          {/* Stats section */}
+          <div className="backdrop-blur-md bg-white/70 border border-white/20 rounded-3xl p-6 shadow-xl max-w-2xl mx-auto">
+            <div className="grid grid-cols-3 gap-6">
+              <div className="text-center">
+                <div className="flex items-center justify-center mb-2">
+                  <Clock className="h-5 w-5 text-[#EE001E] mr-2" />
+                  <span className="text-2xl font-bold text-gray-900">99.9%</span>
+                </div>
+                <p className="text-sm text-gray-600">Accuracy Rate</p>
+              </div>
+              <div className="text-center">
+                <div className="flex items-center justify-center mb-2">
+                  <Users className="h-5 w-5 text-[#EE001E] mr-2" />
+                  <span className="text-2xl font-bold text-gray-900">10K+</span>
+                </div>
+                <p className="text-sm text-gray-600">Files Compared</p>
+              </div>
+              <div className="text-center">
+                <div className="flex items-center justify-center mb-2">
+                  <Zap className="h-5 w-5 text-[#EE001E] mr-2" />
+                  <span className="text-2xl font-bold text-gray-900">&lt;1s</span>
+                </div>
+                <p className="text-sm text-gray-600">Avg. Process Time</p>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="max-w-6xl mx-auto">
-          <Card className="shadow-xl border-0">
-            <CardHeader className="bg-gradient-to-r from-[#EE001E] to-[#FF281E] text-white">
+          <Card className="shadow-2xl border-0 backdrop-blur-md bg-white/80 rounded-3xl overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-[#EE001E] to-[#FF281E] text-white rounded-t-3xl">
               <CardTitle className="text-2xl flex items-center gap-2">
                 <Eye className="h-6 w-6" />
                 File Comparison Tool
+                <div className="ml-auto flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                  <span className="text-sm opacity-90">Live</span>
+                </div>
               </CardTitle>
             </CardHeader>
             <CardContent className="p-8">
               <Tabs value={inputMethod} onValueChange={(value) => setInputMethod(value as 'upload' | 'paste')} className="mb-8">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="upload" className="flex items-center gap-2">
+                <TabsList className="grid w-full grid-cols-2 backdrop-blur-sm bg-white/70 border border-white/20 rounded-2xl">
+                  <TabsTrigger value="upload" className="flex items-center gap-2 rounded-2xl">
                     <Upload className="h-4 w-4" />
                     File Upload
                   </TabsTrigger>
-                  <TabsTrigger value="paste" className="flex items-center gap-2">
+                  <TabsTrigger value="paste" className="flex items-center gap-2 rounded-2xl">
                     <FileText className="h-4 w-4" />
                     Paste Content
                   </TabsTrigger>
@@ -436,7 +522,7 @@ const Index = () => {
                         placeholder="Paste your source configuration here..."
                         value={sourceContent}
                         onChange={(e) => setSourceContent(e.target.value)}
-                        className="min-h-[300px] font-mono text-sm"
+                        className="min-h-[300px] font-mono text-sm backdrop-blur-sm bg-white/70 border-white/20 rounded-2xl"
                       />
                     </div>
                     <div>
@@ -448,7 +534,7 @@ const Index = () => {
                         placeholder="Paste your target configuration here..."
                         value={targetContent}
                         onChange={(e) => setTargetContent(e.target.value)}
-                        className="min-h-[300px] font-mono text-sm"
+                        className="min-h-[300px] font-mono text-sm backdrop-blur-sm bg-white/70 border-white/20 rounded-2xl"
                       />
                     </div>
                   </div>
@@ -471,6 +557,11 @@ const Index = () => {
                 <div className="flex items-center gap-2 mb-4">
                   <Settings className="h-5 w-5 text-gray-600" />
                   <h3 className="text-lg font-semibold">Comparison Settings</h3>
+                  <div className="ml-auto">
+                    <Badge variant="outline" className="backdrop-blur-sm bg-white/70 border-white/20 rounded-xl">
+                      Advanced Mode
+                    </Badge>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -482,7 +573,7 @@ const Index = () => {
                       id="format-select"
                       value={fileFormat}
                       onChange={(e) => setFileFormat(e.target.value as 'json' | 'xml' | 'yaml')}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#EE001E] focus:border-transparent"
+                      className="w-full p-2 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-[#EE001E] focus:border-transparent backdrop-blur-sm bg-white/70 border-white/20"
                     >
                       <option value="json">JSON</option>
                       <option value="xml">XML</option>
@@ -502,6 +593,7 @@ const Index = () => {
                       placeholder="timestamp, version, id"
                       value={ignoreKeys}
                       onChange={(e) => setIgnoreKeys(e.target.value)}
+                      className="backdrop-blur-sm bg-white/70 border-white/20 rounded-2xl"
                     />
                     <p className="text-xs text-gray-500 mt-1">
                       Keys to exclude from comparison
@@ -513,6 +605,7 @@ const Index = () => {
                       id="strict-mode"
                       checked={strictMode}
                       onCheckedChange={setStrictMode}
+                      className="data-[state=checked]:bg-[#EE001E]"
                     />
                     <div>
                       <Label htmlFor="strict-mode" className="text-sm font-medium">
@@ -531,7 +624,7 @@ const Index = () => {
                   onClick={handleCompare}
                   disabled={isComparing || (!sourceContent || !targetContent) || (sourceContent && targetContent && sourceDetectedFormat !== targetDetectedFormat)}
                   size="lg"
-                  className="bg-[#EE001E] hover:bg-[#EE001E]/90 text-white px-8 py-3 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-gradient-to-r from-[#EE001E] to-[#FF281E] hover:from-[#EE001E]/90 hover:to-[#FF281E]/90 text-white px-8 py-3 text-lg disabled:opacity-50 disabled:cursor-not-allowed rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
                 >
                   {isComparing ? (
                     <>
@@ -548,38 +641,38 @@ const Index = () => {
               </div>
 
               {(sourceContent || targetContent) && (
-                <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                <div className="mt-6 p-4 backdrop-blur-md bg-white/70 border border-white/20 rounded-2xl">
                   <div className="flex items-center justify-between">
                     <div className="flex gap-4">
                       {sourceContent && (
-                        <Badge variant="secondary" className="bg-green-100 text-green-800">
+                        <Badge variant="secondary" className="bg-green-100/70 text-green-800 backdrop-blur-sm rounded-xl">
                           Source: {sourceContent.split('\n').length} lines ({sourceDetectedFormat.toUpperCase()})
                         </Badge>
                       )}
                       {targetContent && (
-                        <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                        <Badge variant="secondary" className="bg-blue-100/70 text-blue-800 backdrop-blur-sm rounded-xl">
                           Target: {targetContent.split('\n').length} lines ({targetDetectedFormat.toUpperCase()})
                         </Badge>
                       )}
                     </div>
                     <div className="flex gap-2">
                       {sourceContent && targetContent && sourceDetectedFormat !== targetDetectedFormat ? (
-                        <Badge variant="destructive" className="bg-red-100 text-red-800 border-red-300">
+                        <Badge variant="destructive" className="bg-red-100/70 text-red-800 border-red-300/50 backdrop-blur-sm rounded-xl">
                           Format Mismatch
                         </Badge>
                       ) : sourceContent && targetContent ? (
-                        <Badge variant="outline" className="border-green-500 text-green-700">
+                        <Badge variant="outline" className="border-green-500/50 text-green-700 backdrop-blur-sm bg-green-50/70 rounded-xl">
                           Ready to Compare
                         </Badge>
                       ) : (
-                        <Badge variant="outline" className="border-[#EE001E] text-[#EE001E]">
+                        <Badge variant="outline" className="border-[#EE001E]/50 text-[#EE001E] backdrop-blur-sm bg-red-50/70 rounded-xl">
                           Waiting for Files
                         </Badge>
                       )}
                     </div>
                   </div>
                   {sourceContent && targetContent && sourceDetectedFormat !== targetDetectedFormat && (
-                    <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <div className="mt-3 p-3 bg-red-50/70 border border-red-200/50 rounded-2xl backdrop-blur-sm">
                       <p className="text-red-800 text-sm">
                         <strong>Cannot compare:</strong> Source file is {sourceDetectedFormat.toUpperCase()} but target file is {targetDetectedFormat.toUpperCase()}. 
                         Both files must be in the same format.

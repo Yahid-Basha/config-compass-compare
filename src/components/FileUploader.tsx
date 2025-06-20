@@ -1,4 +1,3 @@
-
 import React, { useCallback, useState } from 'react';
 import { Upload, File, X, Check } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -77,10 +76,10 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFilesChange }) => {
   };
 
   const FileDropZone = ({ type, file }: { type: 'source' | 'target'; file: File | null }) => (
-    <Card className={`relative transition-all duration-200 ${
+    <Card className={`relative transition-all duration-200 backdrop-blur-md border-white/20 shadow-lg rounded-3xl ${
       dragOver === type 
-        ? 'border-[#EE001E] border-2 bg-[#EE001E]/5 shadow-lg' 
-        : 'border-dashed border-2 border-gray-300 hover:border-gray-400'
+        ? 'border-[#EE001E] border-2 bg-[#EE001E]/5 shadow-xl' 
+        : 'border-dashed border-2 border-gray-300/50 hover:border-gray-400/50 bg-white/70'
     }`}>
       <CardContent className="p-8">
         <div
@@ -92,7 +91,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFilesChange }) => {
           {file ? (
             <div className="space-y-4">
               <div className="flex items-center justify-center">
-                <div className="p-3 bg-green-100 rounded-full">
+                <div className="p-3 bg-green-100/70 rounded-full backdrop-blur-sm">
                   <Check className="h-8 w-8 text-green-600" />
                 </div>
               </div>
@@ -106,7 +105,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFilesChange }) => {
                 variant="outline"
                 size="sm"
                 onClick={() => removeFile(type)}
-                className="text-red-600 border-red-300 hover:bg-red-50"
+                className="text-red-600 border-red-300 hover:bg-red-50 backdrop-blur-sm bg-white/70 border-white/20 rounded-2xl"
               >
                 <X className="h-4 w-4 mr-1" />
                 Remove
@@ -116,8 +115,8 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFilesChange }) => {
             <div className="space-y-4">
               <div className="flex items-center justify-center">
                 <div className={`p-4 rounded-full ${
-                  dragOver === type ? 'bg-[#EE001E]/10' : 'bg-gray-100'
-                }`}>
+                  dragOver === type ? 'bg-[#EE001E]/10' : 'bg-gray-100/70'
+                } backdrop-blur-sm`}>
                   <Upload className={`h-10 w-10 ${
                     dragOver === type ? 'text-[#EE001E]' : 'text-gray-400'
                   }`} />
@@ -142,7 +141,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFilesChange }) => {
                 />
                 <label
                   htmlFor={`${type}-file-input`}
-                  className="cursor-pointer inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#EE001E] focus:border-transparent"
+                  className="cursor-pointer inline-flex items-center px-4 py-2 backdrop-blur-sm bg-white/70 border border-white/20 rounded-2xl shadow-sm text-sm font-medium text-gray-700 hover:bg-white/80 focus:outline-none focus:ring-2 focus:ring-[#EE001E] focus:border-transparent transition-all duration-200"
                 >
                   <File className="h-4 w-4 mr-2" />
                   Choose File

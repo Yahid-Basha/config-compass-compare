@@ -25,13 +25,13 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ sourceLines, targetLines, forma
   const getLineStyles = (type: 'added' | 'removed' | 'modified' | 'normal'): string => {
     switch (type) {
       case 'added':
-        return 'bg-green-50 border-l-4 border-green-500 text-green-800';
+        return 'bg-green-50/70 border-l-4 border-green-500 text-green-800 backdrop-blur-sm';
       case 'removed':
-        return 'bg-red-50 border-l-4 border-red-500 text-red-800';
+        return 'bg-red-50/70 border-l-4 border-red-500 text-red-800 backdrop-blur-sm';
       case 'modified':
-        return 'bg-orange-50 border-l-4 border-orange-500 text-orange-800';
+        return 'bg-orange-50/70 border-l-4 border-orange-500 text-orange-800 backdrop-blur-sm';
       default:
-        return 'bg-gray-50 border-l-4 border-transparent';
+        return 'bg-gray-50/70 border-l-4 border-transparent backdrop-blur-sm';
     }
   };
 
@@ -161,11 +161,11 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ sourceLines, targetLines, forma
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
             <h3 className="font-semibold text-lg">{title}</h3>
-            <Badge variant="outline" className="text-xs">
+            <Badge variant="outline" className="text-xs backdrop-blur-sm bg-white/70 border-white/20 rounded-xl">
               {processedLines.length} lines
             </Badge>
             {changeCount > 0 && (
-              <Badge className="bg-[#EE001E] text-white text-xs">
+              <Badge className="bg-[#EE001E] text-white text-xs rounded-xl">
                 {changeCount} changes
               </Badge>
             )}
@@ -174,13 +174,13 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ sourceLines, targetLines, forma
             variant="ghost"
             size="sm"
             onClick={() => copyToClipboard(processedLines, title)}
-            className="text-gray-500 hover:text-gray-700"
+            className="text-gray-500 hover:text-gray-700 rounded-xl"
           >
             <Copy className="h-4 w-4" />
           </Button>
         </div>
         
-        <div className="bg-white border rounded-lg overflow-hidden">
+        <div className="backdrop-blur-md bg-white/80 border border-white/20 rounded-2xl overflow-hidden shadow-lg">
           <div className="max-h-96 overflow-y-auto">
             <pre className="text-sm">
               {processedLines.map((line, index) => {
@@ -228,22 +228,22 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ sourceLines, targetLines, forma
   };
 
   return (
-    <Card className="shadow-lg">
+    <Card className="shadow-xl backdrop-blur-md bg-white/80 border-white/20 rounded-3xl">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             Visual Diff Viewer
-            <Badge variant="outline" className="ml-2">
+            <Badge variant="outline" className="ml-2 backdrop-blur-sm bg-white/70 border-white/20 rounded-xl">
               {format.toUpperCase()}
             </Badge>
           </CardTitle>
           <div className="flex items-center gap-2">
-            <div className="flex bg-gray-100 rounded-lg p-1">
+            <div className="flex backdrop-blur-sm bg-white/70 border border-white/20 rounded-2xl p-1">
               <Button
                 variant={selectedSide === 'source' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setSelectedSide('source')}
-                className="text-xs px-3"
+                className="text-xs px-3 rounded-xl"
               >
                 Source Only
               </Button>
@@ -251,7 +251,7 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ sourceLines, targetLines, forma
                 variant={selectedSide === 'both' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setSelectedSide('both')}
-                className="text-xs px-3"
+                className="text-xs px-3 rounded-xl"
               >
                 Side by Side
               </Button>
@@ -259,7 +259,7 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ sourceLines, targetLines, forma
                 variant={selectedSide === 'target' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setSelectedSide('target')}
-                className="text-xs px-3"
+                className="text-xs px-3 rounded-xl"
               >
                 Target Only
               </Button>
@@ -268,6 +268,7 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ sourceLines, targetLines, forma
               variant="ghost"
               size="sm"
               onClick={() => setIsExpanded(!isExpanded)}
+              className="rounded-xl"
             >
               {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
             </Button>
@@ -279,15 +280,15 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ sourceLines, targetLines, forma
         <CardContent>
           <div className="mb-4 flex items-center gap-4 text-sm">
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-green-200 border border-green-400 rounded"></div>
+              <div className="w-3 h-3 bg-green-200/70 border border-green-400 rounded-full backdrop-blur-sm"></div>
               <span>Added</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-red-200 border border-red-400 rounded"></div>
+              <div className="w-3 h-3 bg-red-200/70 border border-red-400 rounded-full backdrop-blur-sm"></div>
               <span>Removed</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-orange-200 border border-orange-400 rounded"></div>
+              <div className="w-3 h-3 bg-orange-200/70 border border-orange-400 rounded-full backdrop-blur-sm"></div>
               <span>Modified</span>
             </div>
           </div>
