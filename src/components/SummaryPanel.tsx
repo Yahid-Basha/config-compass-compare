@@ -52,7 +52,7 @@ const SummaryPanel: React.FC<SummaryPanelProps> = ({ summary, changes }) => {
               <span className="text-sm font-medium text-red-800">Deletions</span>
             </div>
             <div className="flex-1 flex items-center justify-center">
-              <span className="text-3xl font-bold text-red-600">
+              <span className="text-5xl font-bold text-red-600">
                 {summary.deletions}
               </span>
             </div>
