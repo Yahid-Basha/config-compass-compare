@@ -40,7 +40,7 @@ const SummaryPanel: React.FC<SummaryPanelProps> = ({ summary, changes }) => {
               <span className="text-sm font-medium text-green-800">Additions</span>
             </div>
             <div className="flex-1 flex items-center justify-center">
-              <span className="text-3xl font-bold text-green-600">
+              <span className="text-8xl font-bold text-green-600">
                 {summary.additions}
               </span>
             </div>
@@ -52,7 +52,7 @@ const SummaryPanel: React.FC<SummaryPanelProps> = ({ summary, changes }) => {
               <span className="text-sm font-medium text-red-800">Deletions</span>
             </div>
             <div className="flex-1 flex items-center justify-center">
-              <span className="text-5xl font-bold text-red-600">
+              <span className="text-8xl font-bold text-red-600">
                 {summary.deletions}
               </span>
             </div>
@@ -64,7 +64,7 @@ const SummaryPanel: React.FC<SummaryPanelProps> = ({ summary, changes }) => {
               <span className="text-sm font-medium text-orange-800">Modifications</span>
             </div>
             <div className="flex-1 flex items-center justify-center">
-              <span className="text-3xl font-bold text-orange-600">
+              <span className="text-8xl font-bold text-orange-600">
                 {summary.modifications}
               </span>
             </div>
@@ -76,7 +76,7 @@ const SummaryPanel: React.FC<SummaryPanelProps> = ({ summary, changes }) => {
               <span className="text-sm font-semibold text-gray-800">Total Changes</span>
             </div>
             <div className="flex-1 flex items-center justify-center">
-              <span className="text-3xl font-bold text-[#EE001E]">
+              <span className="text-9xl font-bold text-[#EE001E]">
                 {totalChanges}
               </span>
             </div>
