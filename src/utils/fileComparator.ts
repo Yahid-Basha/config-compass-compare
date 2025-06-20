@@ -5,6 +5,8 @@ export interface ComparisonChange {
   change_type: 'addition' | 'deletion' | 'modification';
   old_value?: any;
   new_value?: any;
+  is_array_item?: boolean;
+  parent_key?: string;
 }
 
 export interface ComparisonSummary {
@@ -144,6 +146,10 @@ export class FileComparator {
     
     const maxLength = Math.max(sourceArray.length, targetArray.length);
     
+    // Extract parent key from path for array item tracking
+    const pathParts = path.split('.');
+    const parentKey = pathParts[pathParts.length - 1];
+    
     for (let i = 0; i < maxLength; i++) {
       const currentPath = `${path}[${i}]`;
       const sourceItem = sourceArray[i];
@@ -154,14 +160,18 @@ export class FileComparator {
         changes.push({
           path: currentPath,
           change_type: 'addition',
-          new_value: targetItem
+          new_value: targetItem,
+          is_array_item: true,
+          parent_key: parentKey
         });
       } else if (sourceItem !== undefined && targetItem === undefined) {
         // Deletion
         changes.push({
           path: currentPath,
           change_type: 'deletion',
-          old_value: sourceItem
+          old_value: sourceItem,
+          is_array_item: true,
+          parent_key: parentKey
         });
       } else if (sourceItem !== undefined && targetItem !== undefined) {
         if (!this.valuesEqual(sourceItem, targetItem)) {
@@ -175,7 +185,9 @@ export class FileComparator {
               path: currentPath,
               change_type: 'modification',
               old_value: sourceItem,
-              new_value: targetItem
+              new_value: targetItem,
+              is_array_item: true,
+              parent_key: parentKey
             });
           }
         }
@@ -326,7 +338,7 @@ export class FileComparator {
       
       // Find the change that affects this line
       const affectingChange = changes.find(change => {
-        return this.lineMatchesChange(line, change, side, format);
+        return this.lineMatchesChange(line, change, side, format, i, lines);
       });
       
       if (affectingChange) {
@@ -346,7 +358,14 @@ export class FileComparator {
     return result;
   }
 
-  private lineMatchesChange(line: string, change: ComparisonChange, side: 'source' | 'target', format: 'json' | 'xml' | 'yaml'): boolean {
+  private lineMatchesChange(
+    line: string, 
+    change: ComparisonChange, 
+    side: 'source' | 'target', 
+    format: 'json' | 'xml' | 'yaml',
+    lineIndex: number,
+    allLines: string[]
+  ): boolean {
     const pathParts = change.path.split('.');
     const lastKey = pathParts[pathParts.length - 1];
     
@@ -354,19 +373,46 @@ export class FileComparator {
     const arrayMatch = lastKey.match(/^(.+)\[(\d+)\]$/);
     if (arrayMatch) {
       const [, arrayKey, index] = arrayMatch;
+      const arrayIndex = parseInt(index, 10);
       
       if (format === 'yaml') {
-        // For YAML arrays, look for the array key and the item
-        if (line.includes(`${arrayKey}:`)) {
-          return true;
+        // For YAML arrays, we need to be more precise about which lines to highlight
+        // Don't highlight the parent key line for array items
+        if (line.includes(`${arrayKey}:`) && !line.trim().startsWith('- ')) {
+          return false; // Don't highlight the parent array key
         }
-        // Check if this is an array item line
+        
+        // Only highlight the specific array item
         if (line.trim().startsWith('- ')) {
           const value = side === 'source' ? change.old_value : change.new_value;
-          if (value !== undefined && line.includes(String(value))) {
+          if (value !== undefined) {
+            // Check if this line contains the specific value
+            const lineValue = line.trim().substring(2).trim();
+            return lineValue === String(value) || line.includes(String(value));
+          }
+          
+          // For array items without specific values, count the array index
+          let arrayItemCount = 0;
+          for (let j = 0; j <= lineIndex; j++) {
+            if (allLines[j].trim().startsWith('- ')) {
+              if (j === lineIndex) {
+                return arrayItemCount === arrayIndex;
+              }
+              arrayItemCount++;
+            }
+          }
+        }
+        return false;
+      } else if (format === 'xml') {
+        // For XML arrays, only highlight the specific array item, not the parent
+        const value = side === 'source' ? change.old_value : change.new_value;
+        if (value !== undefined) {
+          // Check if this line contains the specific value and is not just the parent tag
+          if (line.includes(String(value)) && !line.includes(`<${arrayKey}>`)) {
             return true;
           }
         }
+        return false;
       } else if (format === 'json') {
         // For JSON arrays, look for the value in the line
         const value = side === 'source' ? change.old_value : change.new_value;
@@ -377,7 +423,17 @@ export class FileComparator {
       return false;
     }
     
-    // Regular key matching
+    // For non-array changes, check if this is an array parent key that shouldn't be highlighted
+    if (change.is_array_item && change.parent_key) {
+      if (format === 'yaml' && line.includes(`${change.parent_key}:`) && !line.trim().startsWith('- ')) {
+        return false; // Don't highlight parent array key in YAML
+      }
+      if (format === 'xml' && line.includes(`<${change.parent_key}>`) && !line.includes('</')) {
+        return false; // Don't highlight parent array opening tag in XML
+      }
+    }
+    
+    // Regular key matching for non-array items
     const keyFromPath = lastKey || '';
     let lineContainsKey = false;
     
