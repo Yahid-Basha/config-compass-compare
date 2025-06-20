@@ -199,13 +199,31 @@ export class FileComparator {
     if (this.strictMode) {
       return JSON.stringify(a) === JSON.stringify(b);
     } else {
-      // Lenient comparison
+      // Enhanced lenient comparison for XML
       if (typeof a !== typeof b) return false;
       if (a === null || b === null) return a === b;
       if (typeof a === 'object') {
-        return JSON.stringify(a) === JSON.stringify(b);
+        // For objects, still use JSON comparison but normalize strings
+        const normalizeObj = (obj: any): any => {
+          if (typeof obj === 'string') {
+            return obj.trim().toLowerCase();
+          }
+          if (Array.isArray(obj)) {
+            return obj.map(normalizeObj);
+          }
+          if (typeof obj === 'object' && obj !== null) {
+            const normalized: any = {};
+            for (const key in obj) {
+              normalized[key] = normalizeObj(obj[key]);
+            }
+            return normalized;
+          }
+          return obj;
+        };
+        return JSON.stringify(normalizeObj(a)) === JSON.stringify(normalizeObj(b));
       }
-      return String(a).trim() === String(b).trim();
+      // For primitive values, normalize and compare
+      return String(a).trim().toLowerCase() === String(b).trim().toLowerCase();
     }
   }
 
@@ -375,9 +393,71 @@ export class FileComparator {
       const [, arrayKey, index] = arrayMatch;
       const arrayIndex = parseInt(index, 10);
       
-      if (format === 'yaml') {
-        // For YAML arrays, we need to be more precise about which lines to highlight
-        // Don't highlight the parent key line for array items
+      if (format === 'xml') {
+        // Enhanced XML array handling for all change types including modifications
+        const value = side === 'source' ? change.old_value : change.new_value;
+        
+        if (value !== undefined) {
+          // For XML, check if this line contains the value and is at the correct position
+          const lineContent = line.trim();
+          
+          // Check if the line contains the value
+          if (!lineContent.includes(String(value))) {
+            return false;
+          }
+          
+          // For array items, we need to check if this is the correct array element
+          // by counting how many similar elements appear before this line
+          let elementsFound = 0;
+          let currentArrayContext = false;
+          
+          // Look backwards to find the array parent and count elements
+          for (let j = lineIndex; j >= 0; j--) {
+            const prevLine = allLines[j].trim();
+            
+            // Check if we've found the parent array element
+            if (prevLine.includes(`<${arrayKey}>`)) {
+              currentArrayContext = true;
+              break;
+            }
+            
+            // Count elements of the same type within the current context
+            if (currentArrayContext && prevLine.includes(`<${arrayKey.slice(0, -1)}>`)) {
+              elementsFound++;
+            }
+          }
+          
+          // Also count from the start of the parent to this line
+          elementsFound = 0;
+          currentArrayContext = false;
+          
+          for (let j = 0; j <= lineIndex; j++) {
+            const checkLine = allLines[j].trim();
+            
+            if (checkLine.includes(`<${arrayKey}>`)) {
+              currentArrayContext = true;
+              elementsFound = 0;
+              continue;
+            }
+            
+            if (checkLine.includes(`</${arrayKey}>`)) {
+              currentArrayContext = false;
+              continue;
+            }
+            
+            if (currentArrayContext && j < lineIndex && checkLine.includes(String(value))) {
+              elementsFound++;
+            }
+            
+            if (j === lineIndex && currentArrayContext && checkLine.includes(String(value))) {
+              return elementsFound === arrayIndex;
+            }
+          }
+        }
+        
+        return false;
+      } else if (format === 'yaml') {
+        // ... keep existing code (YAML array handling)
         if (line.includes(`${arrayKey}:`) && !line.trim().startsWith('- ')) {
           return false; // Don't highlight the parent array key
         }
@@ -403,56 +483,8 @@ export class FileComparator {
           }
         }
         return false;
-      } else if (format === 'xml') {
-        // Enhanced XML array handling for modifications
-        const value = side === 'source' ? change.old_value : change.new_value;
-        
-        if (value !== undefined) {
-          // For XML, we need to match the specific array item by both position and value
-          // First, check if this line contains the value
-          if (!line.includes(String(value))) {
-            return false;
-          }
-          
-          // Then, verify this is the correct array item by counting previous occurrences
-          // of the same tag within the parent array
-          const tagMatch = line.match(/<([^>\s/]+)>/);
-          if (tagMatch) {
-            const tagName = tagMatch[1];
-            
-            // Count how many times this tag appears before this line within the parent array
-            let tagCount = 0;
-            let inParentArray = false;
-            
-            for (let j = 0; j < lineIndex; j++) {
-              const prevLine = allLines[j];
-              
-              // Check if we're entering the parent array
-              if (prevLine.includes(`<${arrayKey}>`)) {
-                inParentArray = true;
-                tagCount = 0; // Reset count when entering the array
-                continue;
-              }
-              
-              // Check if we're leaving the parent array
-              if (prevLine.includes(`</${arrayKey}>`)) {
-                inParentArray = false;
-                continue;
-              }
-              
-              // Count tags within the parent array
-              if (inParentArray && prevLine.includes(`<${tagName}>`)) {
-                tagCount++;
-              }
-            }
-            
-            // This line should match if the tag count equals the array index
-            return tagCount === arrayIndex;
-          }
-        }
-        return false;
       } else if (format === 'json') {
-        // For JSON arrays, look for the value in the line
+        // ... keep existing code (JSON array handling)
         const value = side === 'source' ? change.old_value : change.new_value;
         if (value !== undefined && line.includes(String(value))) {
           return true;
