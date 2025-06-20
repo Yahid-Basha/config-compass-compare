@@ -258,9 +258,9 @@ const Index = () => {
               <SummaryPanel summary={comparisonResult.summary} changes={comparisonResult.diff} />
             </div>
 
-            {/* Visual Diff Viewer and Change Details - Side by Side */}
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-              {/* Visual Diff Viewer - 65% (3/5 columns) */}
+            {/* Visual Diff Viewer and Change Details - Side by Side (75% / 25%) */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+              {/* Visual Diff Viewer - 75% (3/4 columns) */}
               <div className="lg:col-span-3">
                 <DiffViewer 
                   sourceLines={comparisonResult.formatted_diff.source}
@@ -269,8 +269,8 @@ const Index = () => {
                 />
               </div>
               
-              {/* Change Details - 35% (2/5 columns) */}
-              <div className="lg:col-span-2">
+              {/* Change Details - 25% (1/4 columns) */}
+              <div className="lg:col-span-1">
                 <Card>
                   <CardHeader className="pb-3">
                     <CardTitle className="flex items-center gap-2 text-lg">
