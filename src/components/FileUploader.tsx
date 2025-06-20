@@ -105,7 +105,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFilesChange }) => {
                 variant="outline"
                 size="sm"
                 onClick={() => removeFile(type)}
-                className="text-red-600 border-red-300 hover:bg-red-50 backdrop-blur-sm bg-white/70 border-white/20 rounded-2xl"
+                className="text-red-600 border-red-300/70 hover:bg-red-50 backdrop-blur-sm bg-white/80 border shadow-md rounded-2xl hover:shadow-lg transition-all duration-200"
               >
                 <X className="h-4 w-4 mr-1" />
                 Remove
@@ -141,7 +141,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFilesChange }) => {
                 />
                 <label
                   htmlFor={`${type}-file-input`}
-                  className="cursor-pointer inline-flex items-center px-4 py-2 backdrop-blur-sm bg-white/70 border border-white/20 rounded-2xl shadow-sm text-sm font-medium text-gray-700 hover:bg-white/80 focus:outline-none focus:ring-2 focus:ring-[#EE001E] focus:border-transparent transition-all duration-200"
+                  className="cursor-pointer inline-flex items-center px-4 py-2 backdrop-blur-sm bg-white/80 border border-gray-300/70 rounded-2xl shadow-md text-sm font-medium text-gray-700 hover:bg-white/90 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[#EE001E] focus:border-transparent transition-all duration-200"
                 >
                   <File className="h-4 w-4 mr-2" />
                   Choose File

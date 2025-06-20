@@ -236,23 +236,23 @@ const Index = () => {
               <h1 className="text-3xl font-bold text-gray-900 mb-2">Configuration Comparison Results</h1>
               <p className="text-gray-600">Visual diff analysis and summary report</p>
               <div className="flex gap-2 mt-2">
-                <Badge variant="outline" className="backdrop-blur-sm bg-white/70 border-white/20 rounded-2xl">Format: {sourceDetectedFormat.toUpperCase()}</Badge>
-                <Badge variant="outline" className="backdrop-blur-sm bg-white/70 border-white/20 rounded-2xl">Mode: {strictMode ? 'Strict' : 'Lenient'}</Badge>
+                <Badge variant="outline" className="backdrop-blur-sm bg-white/80 border border-gray-300/70 shadow-md rounded-2xl">Format: {sourceDetectedFormat.toUpperCase()}</Badge>
+                <Badge variant="outline" className="backdrop-blur-sm bg-white/80 border border-gray-300/70 shadow-md rounded-2xl">Mode: {strictMode ? 'Strict' : 'Lenient'}</Badge>
                 {ignoreKeys && (
-                  <Badge variant="outline" className="backdrop-blur-sm bg-white/70 border-white/20 rounded-2xl">Ignored: {ignoreKeys.split(',').length} keys</Badge>
+                  <Badge variant="outline" className="backdrop-blur-sm bg-white/80 border border-gray-300/70 shadow-md rounded-2xl">Ignored: {ignoreKeys.split(',').length} keys</Badge>
                 )}
               </div>
             </div>
             <div className="flex gap-3">
-              <Button variant="outline" onClick={resetComparison} className="backdrop-blur-sm bg-white/70 border-white/20 hover:bg-white/80 rounded-2xl">
+              <Button variant="outline" onClick={resetComparison} className="backdrop-blur-sm bg-white/80 border border-gray-300/70 hover:bg-white/90 shadow-md hover:shadow-lg rounded-2xl transition-all duration-200">
                 <FileText className="h-4 w-4 mr-2" />
                 New Comparison
               </Button>
-              <Button onClick={handleDownloadReport} className="bg-[#EE001E] hover:bg-[#EE001E]/90 rounded-2xl shadow-lg">
+              <Button onClick={handleDownloadReport} className="bg-[#EE001E] hover:bg-[#EE001E]/90 shadow-lg hover:shadow-xl rounded-2xl transition-all duration-200">
                 <Download className="h-4 w-4 mr-2" />
                 Download Report
               </Button>
-              <Button onClick={handleSimulateAlert} variant="outline" className="border-[#FF281E] text-[#FF281E] hover:bg-[#FF281E]/10 backdrop-blur-sm bg-white/70 border-white/20 rounded-2xl">
+              <Button onClick={handleSimulateAlert} variant="outline" className="border-[#FF281E]/70 text-[#FF281E] hover:bg-[#FF281E]/10 backdrop-blur-sm bg-white/80 border shadow-md hover:shadow-lg rounded-2xl transition-all duration-200">
                 <Bell className="h-4 w-4 mr-2" />
                 Send Alert
               </Button>
@@ -496,12 +496,12 @@ const Index = () => {
             </CardHeader>
             <CardContent className="p-8">
               <Tabs value={inputMethod} onValueChange={(value) => setInputMethod(value as 'upload' | 'paste')} className="mb-8">
-                <TabsList className="grid w-full grid-cols-2 backdrop-blur-sm bg-white/70 border border-white/20 rounded-2xl">
-                  <TabsTrigger value="upload" className="flex items-center gap-2 rounded-2xl">
+                <TabsList className="grid w-full grid-cols-2 backdrop-blur-sm bg-white/80 border border-gray-300/70 shadow-md rounded-2xl">
+                  <TabsTrigger value="upload" className="flex items-center gap-2 rounded-2xl data-[state=active]:bg-white/90 data-[state=active]:shadow-md transition-all duration-200">
                     <Upload className="h-4 w-4" />
                     File Upload
                   </TabsTrigger>
-                  <TabsTrigger value="paste" className="flex items-center gap-2 rounded-2xl">
+                  <TabsTrigger value="paste" className="flex items-center gap-2 rounded-2xl data-[state=active]:bg-white/90 data-[state=active]:shadow-md transition-all duration-200">
                     <FileText className="h-4 w-4" />
                     Paste Content
                   </TabsTrigger>
@@ -522,7 +522,7 @@ const Index = () => {
                         placeholder="Paste your source configuration here..."
                         value={sourceContent}
                         onChange={(e) => setSourceContent(e.target.value)}
-                        className="min-h-[300px] font-mono text-sm backdrop-blur-sm bg-white/70 border-white/20 rounded-2xl"
+                        className="min-h-[300px] font-mono text-sm backdrop-blur-sm bg-white/80 border border-gray-300/70 shadow-md rounded-2xl focus:shadow-lg transition-all duration-200"
                       />
                     </div>
                     <div>
@@ -534,7 +534,7 @@ const Index = () => {
                         placeholder="Paste your target configuration here..."
                         value={targetContent}
                         onChange={(e) => setTargetContent(e.target.value)}
-                        className="min-h-[300px] font-mono text-sm backdrop-blur-sm bg-white/70 border-white/20 rounded-2xl"
+                        className="min-h-[300px] font-mono text-sm backdrop-blur-sm bg-white/80 border border-gray-300/70 shadow-md rounded-2xl focus:shadow-lg transition-all duration-200"
                       />
                     </div>
                   </div>
@@ -558,7 +558,7 @@ const Index = () => {
                   <Settings className="h-5 w-5 text-gray-600" />
                   <h3 className="text-lg font-semibold">Comparison Settings</h3>
                   <div className="ml-auto">
-                    <Badge variant="outline" className="backdrop-blur-sm bg-white/70 border-white/20 rounded-xl">
+                    <Badge variant="outline" className="backdrop-blur-sm bg-white/80 border border-gray-300/70 shadow-md rounded-xl">
                       Advanced Mode
                     </Badge>
                   </div>
@@ -573,7 +573,7 @@ const Index = () => {
                       id="format-select"
                       value={fileFormat}
                       onChange={(e) => setFileFormat(e.target.value as 'json' | 'xml' | 'yaml')}
-                      className="w-full p-2 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-[#EE001E] focus:border-transparent backdrop-blur-sm bg-white/70 border-white/20"
+                      className="w-full p-2 border border-gray-300/70 rounded-2xl focus:ring-2 focus:ring-[#EE001E] focus:border-transparent backdrop-blur-sm bg-white/80 shadow-md focus:shadow-lg transition-all duration-200"
                     >
                       <option value="json">JSON</option>
                       <option value="xml">XML</option>
@@ -593,7 +593,7 @@ const Index = () => {
                       placeholder="timestamp, version, id"
                       value={ignoreKeys}
                       onChange={(e) => setIgnoreKeys(e.target.value)}
-                      className="backdrop-blur-sm bg-white/70 border-white/20 rounded-2xl"
+                      className="backdrop-blur-sm bg-white/80 border border-gray-300/70 shadow-md rounded-2xl focus:shadow-lg transition-all duration-200"
                     />
                     <p className="text-xs text-gray-500 mt-1">
                       Keys to exclude from comparison
@@ -605,7 +605,7 @@ const Index = () => {
                       id="strict-mode"
                       checked={strictMode}
                       onCheckedChange={setStrictMode}
-                      className="data-[state=checked]:bg-[#EE001E]"
+                      className="data-[state=checked]:bg-[#EE001E] shadow-md"
                     />
                     <div>
                       <Label htmlFor="strict-mode" className="text-sm font-medium">
@@ -641,38 +641,38 @@ const Index = () => {
               </div>
 
               {(sourceContent || targetContent) && (
-                <div className="mt-6 p-4 backdrop-blur-md bg-white/70 border border-white/20 rounded-2xl">
+                <div className="mt-6 p-4 backdrop-blur-md bg-white/80 border border-gray-300/70 shadow-md rounded-2xl">
                   <div className="flex items-center justify-between">
                     <div className="flex gap-4">
                       {sourceContent && (
-                        <Badge variant="secondary" className="bg-green-100/70 text-green-800 backdrop-blur-sm rounded-xl">
+                        <Badge variant="secondary" className="bg-green-100/80 text-green-800 backdrop-blur-sm shadow-sm rounded-xl border border-green-200/70">
                           Source: {sourceContent.split('\n').length} lines ({sourceDetectedFormat.toUpperCase()})
                         </Badge>
                       )}
                       {targetContent && (
-                        <Badge variant="secondary" className="bg-blue-100/70 text-blue-800 backdrop-blur-sm rounded-xl">
+                        <Badge variant="secondary" className="bg-blue-100/80 text-blue-800 backdrop-blur-sm shadow-sm rounded-xl border border-blue-200/70">
                           Target: {targetContent.split('\n').length} lines ({targetDetectedFormat.toUpperCase()})
                         </Badge>
                       )}
                     </div>
                     <div className="flex gap-2">
                       {sourceContent && targetContent && sourceDetectedFormat !== targetDetectedFormat ? (
-                        <Badge variant="destructive" className="bg-red-100/70 text-red-800 border-red-300/50 backdrop-blur-sm rounded-xl">
+                        <Badge variant="destructive" className="bg-red-100/80 text-red-800 border border-red-300/70 backdrop-blur-sm shadow-sm rounded-xl">
                           Format Mismatch
                         </Badge>
                       ) : sourceContent && targetContent ? (
-                        <Badge variant="outline" className="border-green-500/50 text-green-700 backdrop-blur-sm bg-green-50/70 rounded-xl">
+                        <Badge variant="outline" className="border-green-500/70 text-green-700 backdrop-blur-sm bg-green-50/80 shadow-sm rounded-xl">
                           Ready to Compare
                         </Badge>
                       ) : (
-                        <Badge variant="outline" className="border-[#EE001E]/50 text-[#EE001E] backdrop-blur-sm bg-red-50/70 rounded-xl">
+                        <Badge variant="outline" className="border-[#EE001E]/70 text-[#EE001E] backdrop-blur-sm bg-red-50/80 shadow-sm rounded-xl">
                           Waiting for Files
                         </Badge>
                       )}
                     </div>
                   </div>
                   {sourceContent && targetContent && sourceDetectedFormat !== targetDetectedFormat && (
-                    <div className="mt-3 p-3 bg-red-50/70 border border-red-200/50 rounded-2xl backdrop-blur-sm">
+                    <div className="mt-3 p-3 bg-red-50/80 border border-red-200/70 rounded-2xl backdrop-blur-sm shadow-sm">
                       <p className="text-red-800 text-sm">
                         <strong>Cannot compare:</strong> Source file is {sourceDetectedFormat.toUpperCase()} but target file is {targetDetectedFormat.toUpperCase()}. 
                         Both files must be in the same format.
