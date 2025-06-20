@@ -404,12 +404,50 @@ export class FileComparator {
         }
         return false;
       } else if (format === 'xml') {
-        // For XML arrays, only highlight the specific array item, not the parent
+        // Enhanced XML array handling for modifications
         const value = side === 'source' ? change.old_value : change.new_value;
+        
         if (value !== undefined) {
-          // Check if this line contains the specific value and is not just the parent tag
-          if (line.includes(String(value)) && !line.includes(`<${arrayKey}>`)) {
-            return true;
+          // For XML, we need to match the specific array item by both position and value
+          // First, check if this line contains the value
+          if (!line.includes(String(value))) {
+            return false;
+          }
+          
+          // Then, verify this is the correct array item by counting previous occurrences
+          // of the same tag within the parent array
+          const tagMatch = line.match(/<([^>\s/]+)>/);
+          if (tagMatch) {
+            const tagName = tagMatch[1];
+            
+            // Count how many times this tag appears before this line within the parent array
+            let tagCount = 0;
+            let inParentArray = false;
+            
+            for (let j = 0; j < lineIndex; j++) {
+              const prevLine = allLines[j];
+              
+              // Check if we're entering the parent array
+              if (prevLine.includes(`<${arrayKey}>`)) {
+                inParentArray = true;
+                tagCount = 0; // Reset count when entering the array
+                continue;
+              }
+              
+              // Check if we're leaving the parent array
+              if (prevLine.includes(`</${arrayKey}>`)) {
+                inParentArray = false;
+                continue;
+              }
+              
+              // Count tags within the parent array
+              if (inParentArray && prevLine.includes(`<${tagName}>`)) {
+                tagCount++;
+              }
+            }
+            
+            // This line should match if the tag count equals the array index
+            return tagCount === arrayIndex;
           }
         }
         return false;
