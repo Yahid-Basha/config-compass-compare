@@ -244,15 +244,15 @@ const Index = () => {
               </div>
             </div>
             <div className="flex gap-3">
-              <Button variant="outline" onClick={resetComparison} className="backdrop-blur-sm bg-white/70 border-white/20 hover:bg-white/80 rounded-2xl">
+              <Button variant="outline" onClick={resetComparison} className="backdrop-blur-sm bg-white/70 border-2 border-white hover:bg-white/80 rounded-2xl">
                 <FileText className="h-4 w-4 mr-2" />
                 New Comparison
               </Button>
-              <Button onClick={handleDownloadReport} className="bg-[#EE001E] hover:bg-[#EE001E]/90 border border-[#EE001E]/20 rounded-2xl shadow-lg">
+              <Button onClick={handleDownloadReport} className="bg-[#EE001E] hover:bg-[#EE001E]/90 border-2 border-white rounded-2xl shadow-lg">
                 <Download className="h-4 w-4 mr-2" />
                 Download Report
               </Button>
-              <Button onClick={handleSimulateAlert} variant="outline" className="border-2 border-[#FF281E] text-[#FF281E] hover:bg-[#FF281E]/10 backdrop-blur-sm bg-white/70 rounded-2xl">
+              <Button onClick={handleSimulateAlert} variant="outline" className="border-2 border-white text-[#FF281E] hover:bg-[#FF281E]/10 backdrop-blur-sm bg-white/70 rounded-2xl">
                 <Bell className="h-4 w-4 mr-2" />
                 Send Alert
               </Button>
@@ -496,12 +496,12 @@ const Index = () => {
             </CardHeader>
             <CardContent className="p-8">
               <Tabs value={inputMethod} onValueChange={(value) => setInputMethod(value as 'upload' | 'paste')} className="mb-8">
-                <TabsList className="grid w-full grid-cols-2 backdrop-blur-sm bg-white/70 border border-white/20 rounded-2xl">
-                  <TabsTrigger value="upload" className="flex items-center gap-2 rounded-2xl data-[state=active]:bg-white">
+                <TabsList className="grid w-full grid-cols-2 backdrop-blur-sm bg-white/70 border-2 border-white rounded-2xl">
+                  <TabsTrigger value="upload" className="flex items-center gap-2 rounded-2xl data-[state=active]:bg-white border-2 border-transparent data-[state=active]:border-white">
                     <Upload className="h-4 w-4" />
                     File Upload
                   </TabsTrigger>
-                  <TabsTrigger value="paste" className="flex items-center gap-2 rounded-2xl data-[state=active]:bg-white">
+                  <TabsTrigger value="paste" className="flex items-center gap-2 rounded-2xl data-[state=active]:bg-white border-2 border-transparent data-[state=active]:border-white">
                     <FileText className="h-4 w-4" />
                     Paste Content
                   </TabsTrigger>
@@ -522,7 +522,7 @@ const Index = () => {
                         placeholder="Paste your source configuration here..."
                         value={sourceContent}
                         onChange={(e) => setSourceContent(e.target.value)}
-                        className="min-h-[300px] font-mono text-sm backdrop-blur-sm bg-white/70 border-white/20 rounded-2xl"
+                        className="min-h-[300px] font-mono text-sm backdrop-blur-sm bg-white/70 border-2 border-white rounded-2xl"
                       />
                     </div>
                     <div>
@@ -534,7 +534,7 @@ const Index = () => {
                         placeholder="Paste your target configuration here..."
                         value={targetContent}
                         onChange={(e) => setTargetContent(e.target.value)}
-                        className="min-h-[300px] font-mono text-sm backdrop-blur-sm bg-white/70 border-white/20 rounded-2xl"
+                        className="min-h-[300px] font-mono text-sm backdrop-blur-sm bg-white/70 border-2 border-white rounded-2xl"
                       />
                     </div>
                   </div>
@@ -573,7 +573,7 @@ const Index = () => {
                       id="format-select"
                       value={fileFormat}
                       onChange={(e) => setFileFormat(e.target.value as 'json' | 'xml' | 'yaml')}
-                      className="w-full p-2 border border-gray-300/50 rounded-2xl focus:ring-2 focus:ring-[#EE001E] focus:border-transparent backdrop-blur-sm bg-white/70"
+                      className="w-full p-2 border-2 border-white rounded-2xl focus:ring-2 focus:ring-[#EE001E] focus:border-transparent backdrop-blur-sm bg-white/70"
                     >
                       <option value="json">JSON</option>
                       <option value="xml">XML</option>
@@ -593,7 +593,7 @@ const Index = () => {
                       placeholder="timestamp, version, id"
                       value={ignoreKeys}
                       onChange={(e) => setIgnoreKeys(e.target.value)}
-                      className="backdrop-blur-sm bg-white/70 border-white/20 rounded-2xl"
+                      className="backdrop-blur-sm bg-white/70 border-2 border-white rounded-2xl"
                     />
                     <p className="text-xs text-gray-500 mt-1">
                       Keys to exclude from comparison
@@ -624,7 +624,7 @@ const Index = () => {
                   onClick={handleCompare}
                   disabled={isComparing || (!sourceContent || !targetContent) || (sourceContent && targetContent && sourceDetectedFormat !== targetDetectedFormat)}
                   size="lg"
-                  className="bg-gradient-to-r from-[#EE001E] to-[#FF281E] hover:from-[#EE001E]/90 hover:to-[#FF281E]/90 text-white px-8 py-3 text-lg disabled:opacity-50 disabled:cursor-not-allowed border border-[#EE001E]/20 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                  className="bg-gradient-to-r from-[#EE001E] to-[#FF281E] hover:from-[#EE001E]/90 hover:to-[#FF281E]/90 text-white px-8 py-3 text-lg disabled:opacity-50 disabled:cursor-not-allowed border-2 border-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
                 >
                   {isComparing ? (
                     <>

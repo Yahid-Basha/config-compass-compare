@@ -101,18 +101,18 @@ const FilePreview: React.FC<FilePreviewProps> = ({
             <FileText className="h-4 w-4 text-gray-600" />
             <span className="font-medium">{label}</span>
             {file && (
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="text-xs backdrop-blur-sm bg-white/70 border-white/20 rounded-xl">
                 {file.name}
               </Badge>
             )}
           </div>
           <div className="flex items-center gap-2">
             {validation.isValid ? (
-              <Badge className="bg-green-100 text-green-800 border-green-300">
+              <Badge className="bg-green-100/70 text-green-800 border-green-300/50 backdrop-blur-sm rounded-xl">
                 Valid {format.toUpperCase()}
               </Badge>
             ) : (
-              <Badge className="bg-red-100 text-red-800 border-red-300">
+              <Badge className="bg-red-100/70 text-red-800 border-red-300/50 backdrop-blur-sm rounded-xl">
                 <AlertCircle className="h-3 w-3 mr-1" />
                 Invalid
               </Badge>
@@ -121,28 +121,28 @@ const FilePreview: React.FC<FilePreviewProps> = ({
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-          <div className="bg-gray-50 p-2 rounded">
+          <div className="bg-gray-50/70 p-2 rounded-xl backdrop-blur-sm">
             <div className="text-gray-600">Lines</div>
             <div className="font-semibold">{lineCount.toLocaleString()}</div>
           </div>
-          <div className="bg-gray-50 p-2 rounded">
+          <div className="bg-gray-50/70 p-2 rounded-xl backdrop-blur-sm">
             <div className="text-gray-600">Characters</div>
             <div className="font-semibold">{charCount.toLocaleString()}</div>
           </div>
-          <div className="bg-gray-50 p-2 rounded">
+          <div className="bg-gray-50/70 p-2 rounded-xl backdrop-blur-sm">
             <div className="text-gray-600">Size</div>
             <div className="font-semibold">
               {file ? formatFileSize(file.size) : formatFileSize(new Blob([content]).size)}
             </div>
           </div>
-          <div className="bg-gray-50 p-2 rounded">
+          <div className="bg-gray-50/70 p-2 rounded-xl backdrop-blur-sm">
             <div className="text-gray-600">Format</div>
             <div className="font-semibold">{format.toUpperCase()}</div>
           </div>
         </div>
 
         {!validation.isValid && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+          <div className="bg-red-50/70 border border-red-200/50 rounded-2xl p-3 backdrop-blur-sm">
             <div className="flex items-center gap-2 text-red-800">
               <AlertCircle className="h-4 w-4" />
               <span className="font-medium">Validation Error</span>
@@ -169,6 +169,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
               variant="outline"
               size="sm"
               onClick={() => copyToClipboard(formattedContent, label)}
+              className="border-2 border-white hover:border-gray-300 rounded-xl"
             >
               <Copy className="h-4 w-4 mr-1" />
               Copy
@@ -177,6 +178,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
               variant="outline"
               size="sm"
               onClick={() => downloadContent(formattedContent, filename)}
+              className="border-2 border-white hover:border-gray-300 rounded-xl"
             >
               <Download className="h-4 w-4 mr-1" />
               Download
@@ -184,7 +186,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
           </div>
         </div>
 
-        <ScrollArea className="h-64 w-full border rounded-lg">
+        <ScrollArea className="h-64 w-full border-2 border-white rounded-2xl backdrop-blur-sm bg-white/70">
           <pre className="p-4 text-sm font-mono whitespace-pre-wrap">
             <code className={`language-${format}`}>
               {formattedContent}
@@ -203,7 +205,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
   const showFormatMismatch = sourceContent && targetContent && sourceDetectedFormat !== targetDetectedFormat;
 
   return (
-    <Card className="mt-6">
+    <Card className="mt-6 backdrop-blur-md bg-white/80 border-white/20 shadow-xl rounded-3xl">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-lg">
@@ -211,15 +213,15 @@ const FilePreview: React.FC<FilePreviewProps> = ({
             File Preview
             {sourceContent && targetContent ? (
               <div className="flex gap-2 ml-2">
-                <Badge variant="outline">
+                <Badge variant="outline" className="backdrop-blur-sm bg-white/70 border-white/20 rounded-xl">
                   Source: {sourceDetectedFormat.toUpperCase()}
                 </Badge>
-                <Badge variant="outline">
+                <Badge variant="outline" className="backdrop-blur-sm bg-white/70 border-white/20 rounded-xl">
                   Target: {targetDetectedFormat.toUpperCase()}
                 </Badge>
               </div>
             ) : (
-              <Badge variant="outline" className="ml-2">
+              <Badge variant="outline" className="ml-2 backdrop-blur-sm bg-white/70 border-white/20 rounded-xl">
                 {sourceContent ? sourceDetectedFormat.toUpperCase() : targetDetectedFormat.toUpperCase()}
               </Badge>
             )}
@@ -228,6 +230,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
             variant="ghost"
             size="sm"
             onClick={() => setIsExpanded(!isExpanded)}
+            className="border-2 border-white hover:border-gray-300 rounded-xl"
           >
             {isExpanded ? (
               <>
@@ -243,7 +246,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
           </Button>
         </div>
         {showFormatMismatch && (
-          <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <div className="mt-3 p-3 bg-red-50/70 border border-red-200/50 rounded-2xl backdrop-blur-sm">
             <div className="flex items-center gap-2 text-red-800">
               <AlertCircle className="h-4 w-4" />
               <span className="font-medium">Format Mismatch Detected</span>
@@ -260,28 +263,28 @@ const FilePreview: React.FC<FilePreviewProps> = ({
         <CardContent>
           {sourceContent && targetContent ? (
             <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'source' | 'target')}>
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="source" className="flex items-center gap-2">
+              <TabsList className="grid w-full grid-cols-2 backdrop-blur-sm bg-white/70 border-2 border-white rounded-2xl">
+                <TabsTrigger value="source" className="flex items-center gap-2 rounded-2xl border-2 border-transparent data-[state=active]:border-white">
                   <FileText className="h-4 w-4" />
                   Source File
                   {sourceFile && (
-                    <Badge variant="secondary" className="ml-1 text-xs">
+                    <Badge variant="secondary" className="ml-1 text-xs backdrop-blur-sm bg-white/70 rounded-xl">
                       {sourceFile.name}
                     </Badge>
                   )}
-                  <Badge variant="outline" className="ml-1 text-xs">
+                  <Badge variant="outline" className="ml-1 text-xs backdrop-blur-sm bg-white/70 border-white/20 rounded-xl">
                     {sourceDetectedFormat.toUpperCase()}
                   </Badge>
                 </TabsTrigger>
-                <TabsTrigger value="target" className="flex items-center gap-2">
+                <TabsTrigger value="target" className="flex items-center gap-2 rounded-2xl border-2 border-transparent data-[state=active]:border-white">
                   <FileText className="h-4 w-4" />
                   Target File
                   {targetFile && (
-                    <Badge variant="secondary" className="ml-1 text-xs">
+                    <Badge variant="secondary" className="ml-1 text-xs backdrop-blur-sm bg-white/70 rounded-xl">
                       {targetFile.name}
                     </Badge>
                   )}
-                  <Badge variant="outline" className="ml-1 text-xs">
+                  <Badge variant="outline" className="ml-1 text-xs backdrop-blur-sm bg-white/70 border-white/20 rounded-xl">
                     {targetDetectedFormat.toUpperCase()}
                   </Badge>
                 </TabsTrigger>

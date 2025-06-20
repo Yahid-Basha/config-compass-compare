@@ -174,7 +174,7 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ sourceLines, targetLines, forma
             variant="ghost"
             size="sm"
             onClick={() => copyToClipboard(processedLines, title)}
-            className="text-gray-500 hover:text-gray-700 rounded-xl"
+            className="text-gray-500 hover:text-gray-700 rounded-xl border-2 border-white hover:border-gray-300"
           >
             <Copy className="h-4 w-4" />
           </Button>
@@ -238,12 +238,12 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ sourceLines, targetLines, forma
             </Badge>
           </CardTitle>
           <div className="flex items-center gap-2">
-            <div className="flex backdrop-blur-sm bg-white/70 border border-white/20 rounded-2xl p-1">
+            <div className="flex backdrop-blur-sm bg-white/70 border-2 border-white rounded-2xl p-1">
               <Button
                 variant={selectedSide === 'source' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setSelectedSide('source')}
-                className="text-xs px-3 rounded-xl"
+                className="text-xs px-3 rounded-xl border-2 border-transparent data-[state=active]:border-white"
               >
                 Source Only
               </Button>
@@ -251,7 +251,7 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ sourceLines, targetLines, forma
                 variant={selectedSide === 'both' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setSelectedSide('both')}
-                className="text-xs px-3 rounded-xl"
+                className="text-xs px-3 rounded-xl border-2 border-transparent data-[state=active]:border-white"
               >
                 Side by Side
               </Button>
@@ -259,7 +259,7 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ sourceLines, targetLines, forma
                 variant={selectedSide === 'target' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setSelectedSide('target')}
-                className="text-xs px-3 rounded-xl"
+                className="text-xs px-3 rounded-xl border-2 border-transparent data-[state=active]:border-white"
               >
                 Target Only
               </Button>
@@ -268,7 +268,7 @@ const DiffViewer: React.FC<DiffViewerProps> = ({ sourceLines, targetLines, forma
               variant="ghost"
               size="sm"
               onClick={() => setIsExpanded(!isExpanded)}
-              className="rounded-xl"
+              className="rounded-xl border-2 border-white hover:border-gray-300"
             >
               {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
             </Button>
