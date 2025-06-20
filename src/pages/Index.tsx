@@ -236,23 +236,34 @@ const Index = () => {
               <h1 className="text-3xl font-bold text-gray-900 mb-2">Configuration Comparison Results</h1>
               <p className="text-gray-600">Visual diff analysis and summary report</p>
               <div className="flex gap-2 mt-2">
-                <Badge variant="outline" className="backdrop-blur-sm bg-white/70 border-white/20 rounded-2xl">Format: {sourceDetectedFormat.toUpperCase()}</Badge>
-                <Badge variant="outline" className="backdrop-blur-sm bg-white/70 border-white/20 rounded-2xl">Mode: {strictMode ? 'Strict' : 'Lenient'}</Badge>
+                <Badge variant="outline" className="backdrop-blur-sm bg-white/80 border-gray-300 shadow-sm rounded-2xl">Format: {sourceDetectedFormat.toUpperCase()}</Badge>
+                <Badge variant="outline" className="backdrop-blur-sm bg-white/80 border-gray-300 shadow-sm rounded-2xl">Mode: {strictMode ? 'Strict' : 'Lenient'}</Badge>
                 {ignoreKeys && (
-                  <Badge variant="outline" className="backdrop-blur-sm bg-white/70 border-white/20 rounded-2xl">Ignored: {ignoreKeys.split(',').length} keys</Badge>
+                  <Badge variant="outline" className="backdrop-blur-sm bg-white/80 border-gray-300 shadow-sm rounded-2xl">Ignored: {ignoreKeys.split(',').length} keys</Badge>
                 )}
               </div>
             </div>
             <div className="flex gap-3">
-              <Button variant="outline" onClick={resetComparison} className="backdrop-blur-sm bg-white/70 border-white/20 hover:bg-white/80 rounded-2xl">
+              <Button 
+                variant="outline" 
+                onClick={resetComparison} 
+                className="backdrop-blur-sm bg-white/80 border-gray-300 hover:bg-white/90 shadow-lg hover:shadow-xl rounded-2xl transition-all duration-200"
+              >
                 <FileText className="h-4 w-4 mr-2" />
                 New Comparison
               </Button>
-              <Button onClick={handleDownloadReport} className="bg-[#EE001E] hover:bg-[#EE001E]/90 rounded-2xl shadow-lg">
+              <Button 
+                onClick={handleDownloadReport} 
+                className="bg-[#EE001E] hover:bg-[#EE001E]/90 shadow-lg hover:shadow-xl rounded-2xl transition-all duration-200"
+              >
                 <Download className="h-4 w-4 mr-2" />
                 Download Report
               </Button>
-              <Button onClick={handleSimulateAlert} variant="outline" className="border-[#FF281E] text-[#FF281E] hover:bg-[#FF281E]/10 backdrop-blur-sm bg-white/70 border-white/20 rounded-2xl">
+              <Button 
+                onClick={handleSimulateAlert} 
+                variant="outline" 
+                className="border-[#FF281E] text-[#FF281E] hover:bg-[#FF281E]/10 backdrop-blur-sm bg-white/80 border-2 shadow-lg hover:shadow-xl rounded-2xl transition-all duration-200"
+              >
                 <Bell className="h-4 w-4 mr-2" />
                 Send Alert
               </Button>
@@ -266,9 +277,9 @@ const Index = () => {
             </div>
 
             {/* Visual Diff Viewer and Change Details - Side by Side (75% / 25%) */}
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-              {/* Visual Diff Viewer - 75% (3/4 columns) */}
-              <div className="lg:col-span-3">
+            <div className="flex gap-6 h-[600px]">
+              {/* Visual Diff Viewer - 75% */}
+              <div className="flex-[3]">
                 <DiffViewer 
                   sourceLines={comparisonResult.formatted_diff.source}
                   targetLines={comparisonResult.formatted_diff.target}
@@ -276,9 +287,9 @@ const Index = () => {
                 />
               </div>
               
-              {/* Change Details - 25% (1/4 columns) */}
-              <div className="lg:col-span-1">
-                <Card className="backdrop-blur-md bg-white/70 border-white/20 shadow-xl rounded-3xl">
+              {/* Change Details - 25% */}
+              <div className="flex-[1]">
+                <Card className="backdrop-blur-md bg-white/80 border-gray-300 shadow-xl rounded-3xl h-full">
                   <CardHeader className="pb-3">
                     <CardTitle className="flex items-center gap-2 text-lg">
                       <FileText className="h-5 w-5" />
@@ -286,7 +297,7 @@ const Index = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-3 max-h-96 overflow-y-auto">
+                    <div className="space-y-3 max-h-[500px] overflow-y-auto">
                       {comparisonResult.diff.length === 0 ? (
                         <p className="text-gray-500 text-center py-4">No changes detected</p>
                       ) : (
@@ -307,13 +318,13 @@ const Index = () => {
                           const getChangeColor = (type: string) => {
                             switch (type) {
                               case 'addition':
-                                return 'text-green-700 bg-green-50/70 border-green-200/50 backdrop-blur-sm';
+                                return 'text-green-700 bg-green-50/80 border-green-300 backdrop-blur-sm shadow-sm';
                               case 'deletion':
-                                return 'text-red-700 bg-red-50/70 border-red-200/50 backdrop-blur-sm';
+                                return 'text-red-700 bg-red-50/80 border-red-300 backdrop-blur-sm shadow-sm';
                               case 'modification':
-                                return 'text-orange-700 bg-orange-50/70 border-orange-200/50 backdrop-blur-sm';
+                                return 'text-orange-700 bg-orange-50/80 border-orange-300 backdrop-blur-sm shadow-sm';
                               default:
-                                return 'text-gray-700 bg-gray-50/70 border-gray-200/50 backdrop-blur-sm';
+                                return 'text-gray-700 bg-gray-50/80 border-gray-300 backdrop-blur-sm shadow-sm';
                             }
                           };
 
@@ -335,7 +346,7 @@ const Index = () => {
                                   <p className="font-medium text-sm truncate" title={change.path}>
                                     {change.path}
                                   </p>
-                                  <Badge variant="outline" className="text-xs mt-1 rounded-xl">
+                                  <Badge variant="outline" className="text-xs mt-1 rounded-xl border-gray-300 bg-white/80 shadow-sm">
                                     {change.change_type}
                                   </Badge>
                                 </div>
@@ -344,7 +355,7 @@ const Index = () => {
                               {change.change_type === 'modification' && (
                                 <div className="mt-2 space-y-1 text-xs">
                                   {change.old_value !== undefined && (
-                                    <div className="bg-white/50 p-2 rounded-xl border backdrop-blur-sm">
+                                    <div className="bg-white/80 p-2 rounded-xl border border-gray-200 backdrop-blur-sm shadow-sm">
                                       <span className="font-medium text-red-700">- </span>
                                       <code className="text-red-800">
                                         {formatValue(change.old_value)}
@@ -352,7 +363,7 @@ const Index = () => {
                                     </div>
                                   )}
                                   {change.new_value !== undefined && (
-                                    <div className="bg-white/50 p-2 rounded-xl border backdrop-blur-sm">
+                                    <div className="bg-white/80 p-2 rounded-xl border border-gray-200 backdrop-blur-sm shadow-sm">
                                       <span className="font-medium text-green-700">+ </span>
                                       <code className="text-green-800">
                                         {formatValue(change.new_value)}
@@ -364,7 +375,7 @@ const Index = () => {
                               
                               {change.change_type === 'addition' && change.new_value !== undefined && (
                                 <div className="mt-2 text-xs">
-                                  <div className="bg-white/50 p-2 rounded-xl border backdrop-blur-sm">
+                                  <div className="bg-white/80 p-2 rounded-xl border border-gray-200 backdrop-blur-sm shadow-sm">
                                     <code className="text-green-800">
                                       {formatValue(change.new_value)}
                                     </code>
@@ -374,7 +385,7 @@ const Index = () => {
                               
                               {change.change_type === 'deletion' && change.old_value !== undefined && (
                                 <div className="mt-2 text-xs">
-                                  <div className="bg-white/50 p-2 rounded-xl border backdrop-blur-sm">
+                                  <div className="bg-white/80 p-2 rounded-xl border border-gray-200 backdrop-blur-sm shadow-sm">
                                     <code className="text-red-800">
                                       {formatValue(change.old_value)}
                                     </code>
@@ -423,7 +434,7 @@ const Index = () => {
           
           {/* Feature highlights */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto mb-8">
-            <div className="backdrop-blur-md bg-white/70 border border-white/20 rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
+            <div className="backdrop-blur-md bg-white/80 border border-gray-300 rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
               <div className="flex items-center justify-center mb-4">
                 <div className="p-3 bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl">
                   <Zap className="h-6 w-6 text-white" />
@@ -433,7 +444,7 @@ const Index = () => {
               <p className="text-gray-600 text-sm">Process large configuration files in milliseconds with our optimized comparison engine.</p>
             </div>
             
-            <div className="backdrop-blur-md bg-white/70 border border-white/20 rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
+            <div className="backdrop-blur-md bg-white/80 border border-gray-300 rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
               <div className="flex items-center justify-center mb-4">
                 <div className="p-3 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl">
                   <Shield className="h-6 w-6 text-white" />
@@ -443,7 +454,7 @@ const Index = () => {
               <p className="text-gray-600 text-sm">All comparisons happen locally in your browser. Your files never leave your device.</p>
             </div>
             
-            <div className="backdrop-blur-md bg-white/70 border border-white/20 rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
+            <div className="backdrop-blur-md bg-white/80 border border-gray-300 rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
               <div className="flex items-center justify-center mb-4">
                 <div className="p-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl">
                   <Globe className="h-6 w-6 text-white" />
@@ -455,7 +466,7 @@ const Index = () => {
           </div>
 
           {/* Stats section */}
-          <div className="backdrop-blur-md bg-white/70 border border-white/20 rounded-3xl p-6 shadow-xl max-w-2xl mx-auto">
+          <div className="backdrop-blur-md bg-white/80 border border-gray-300 rounded-3xl p-6 shadow-xl max-w-2xl mx-auto">
             <div className="grid grid-cols-3 gap-6">
               <div className="text-center">
                 <div className="flex items-center justify-center mb-2">
@@ -474,7 +485,7 @@ const Index = () => {
               <div className="text-center">
                 <div className="flex items-center justify-center mb-2">
                   <Zap className="h-5 w-5 text-[#EE001E] mr-2" />
-                  <span className="text-2xl font-bold text-gray-900">&lt;1s</span>
+                  <span className="text-2xl font-bold text-gray-900"><1s</span>
                 </div>
                 <p className="text-sm text-gray-600">Avg. Process Time</p>
               </div>
@@ -483,7 +494,7 @@ const Index = () => {
         </div>
 
         <div className="max-w-6xl mx-auto">
-          <Card className="shadow-2xl border-0 backdrop-blur-md bg-white/80 rounded-3xl overflow-hidden">
+          <Card className="shadow-2xl border-0 backdrop-blur-md bg-white/90 rounded-3xl overflow-hidden">
             <CardHeader className="bg-gradient-to-r from-[#EE001E] to-[#FF281E] text-white rounded-t-3xl">
               <CardTitle className="text-2xl flex items-center gap-2">
                 <Eye className="h-6 w-6" />
@@ -496,12 +507,12 @@ const Index = () => {
             </CardHeader>
             <CardContent className="p-8">
               <Tabs value={inputMethod} onValueChange={(value) => setInputMethod(value as 'upload' | 'paste')} className="mb-8">
-                <TabsList className="grid w-full grid-cols-2 backdrop-blur-sm bg-white/70 border border-white/20 rounded-2xl">
-                  <TabsTrigger value="upload" className="flex items-center gap-2 rounded-2xl">
+                <TabsList className="grid w-full grid-cols-2 backdrop-blur-sm bg-white/80 border border-gray-300 rounded-2xl shadow-lg">
+                  <TabsTrigger value="upload" className="flex items-center gap-2 rounded-2xl shadow-sm">
                     <Upload className="h-4 w-4" />
                     File Upload
                   </TabsTrigger>
-                  <TabsTrigger value="paste" className="flex items-center gap-2 rounded-2xl">
+                  <TabsTrigger value="paste" className="flex items-center gap-2 rounded-2xl shadow-sm">
                     <FileText className="h-4 w-4" />
                     Paste Content
                   </TabsTrigger>
@@ -522,7 +533,7 @@ const Index = () => {
                         placeholder="Paste your source configuration here..."
                         value={sourceContent}
                         onChange={(e) => setSourceContent(e.target.value)}
-                        className="min-h-[300px] font-mono text-sm backdrop-blur-sm bg-white/70 border-white/20 rounded-2xl"
+                        className="min-h-[300px] font-mono text-sm backdrop-blur-sm bg-white/80 border-gray-300 rounded-2xl shadow-lg"
                       />
                     </div>
                     <div>
@@ -534,7 +545,7 @@ const Index = () => {
                         placeholder="Paste your target configuration here..."
                         value={targetContent}
                         onChange={(e) => setTargetContent(e.target.value)}
-                        className="min-h-[300px] font-mono text-sm backdrop-blur-sm bg-white/70 border-white/20 rounded-2xl"
+                        className="min-h-[300px] font-mono text-sm backdrop-blur-sm bg-white/80 border-gray-300 rounded-2xl shadow-lg"
                       />
                     </div>
                   </div>
@@ -558,7 +569,7 @@ const Index = () => {
                   <Settings className="h-5 w-5 text-gray-600" />
                   <h3 className="text-lg font-semibold">Comparison Settings</h3>
                   <div className="ml-auto">
-                    <Badge variant="outline" className="backdrop-blur-sm bg-white/70 border-white/20 rounded-xl">
+                    <Badge variant="outline" className="backdrop-blur-sm bg-white/80 border-gray-300 rounded-xl shadow-sm">
                       Advanced Mode
                     </Badge>
                   </div>
@@ -573,7 +584,7 @@ const Index = () => {
                       id="format-select"
                       value={fileFormat}
                       onChange={(e) => setFileFormat(e.target.value as 'json' | 'xml' | 'yaml')}
-                      className="w-full p-2 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-[#EE001E] focus:border-transparent backdrop-blur-sm bg-white/70 border-white/20"
+                      className="w-full p-2 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-[#EE001E] focus:border-transparent backdrop-blur-sm bg-white/80 shadow-lg"
                     >
                       <option value="json">JSON</option>
                       <option value="xml">XML</option>
@@ -593,7 +604,7 @@ const Index = () => {
                       placeholder="timestamp, version, id"
                       value={ignoreKeys}
                       onChange={(e) => setIgnoreKeys(e.target.value)}
-                      className="backdrop-blur-sm bg-white/70 border-white/20 rounded-2xl"
+                      className="backdrop-blur-sm bg-white/80 border-gray-300 rounded-2xl shadow-lg"
                     />
                     <p className="text-xs text-gray-500 mt-1">
                       Keys to exclude from comparison
@@ -624,7 +635,7 @@ const Index = () => {
                   onClick={handleCompare}
                   disabled={isComparing || (!sourceContent || !targetContent) || (sourceContent && targetContent && sourceDetectedFormat !== targetDetectedFormat)}
                   size="lg"
-                  className="bg-gradient-to-r from-[#EE001E] to-[#FF281E] hover:from-[#EE001E]/90 hover:to-[#FF281E]/90 text-white px-8 py-3 text-lg disabled:opacity-50 disabled:cursor-not-allowed rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                  className="bg-gradient-to-r from-[#EE001E] to-[#FF281E] hover:from-[#EE001E]/90 hover:to-[#FF281E]/90 text-white px-8 py-3 text-lg disabled:opacity-50 disabled:cursor-not-allowed rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 border-2 border-[#EE001E]/20"
                 >
                   {isComparing ? (
                     <>
@@ -641,38 +652,38 @@ const Index = () => {
               </div>
 
               {(sourceContent || targetContent) && (
-                <div className="mt-6 p-4 backdrop-blur-md bg-white/70 border border-white/20 rounded-2xl">
+                <div className="mt-6 p-4 backdrop-blur-md bg-white/80 border border-gray-300 rounded-2xl shadow-lg">
                   <div className="flex items-center justify-between">
                     <div className="flex gap-4">
                       {sourceContent && (
-                        <Badge variant="secondary" className="bg-green-100/70 text-green-800 backdrop-blur-sm rounded-xl">
+                        <Badge variant="secondary" className="bg-green-100/80 text-green-800 backdrop-blur-sm rounded-xl border border-green-300 shadow-sm">
                           Source: {sourceContent.split('\n').length} lines ({sourceDetectedFormat.toUpperCase()})
                         </Badge>
                       )}
                       {targetContent && (
-                        <Badge variant="secondary" className="bg-blue-100/70 text-blue-800 backdrop-blur-sm rounded-xl">
+                        <Badge variant="secondary" className="bg-blue-100/80 text-blue-800 backdrop-blur-sm rounded-xl border border-blue-300 shadow-sm">
                           Target: {targetContent.split('\n').length} lines ({targetDetectedFormat.toUpperCase()})
                         </Badge>
                       )}
                     </div>
                     <div className="flex gap-2">
                       {sourceContent && targetContent && sourceDetectedFormat !== targetDetectedFormat ? (
-                        <Badge variant="destructive" className="bg-red-100/70 text-red-800 border-red-300/50 backdrop-blur-sm rounded-xl">
+                        <Badge variant="destructive" className="bg-red-100/80 text-red-800 border-red-300 backdrop-blur-sm rounded-xl shadow-sm">
                           Format Mismatch
                         </Badge>
                       ) : sourceContent && targetContent ? (
-                        <Badge variant="outline" className="border-green-500/50 text-green-700 backdrop-blur-sm bg-green-50/70 rounded-xl">
+                        <Badge variant="outline" className="border-green-500 text-green-700 backdrop-blur-sm bg-green-50/80 rounded-xl shadow-sm">
                           Ready to Compare
                         </Badge>
                       ) : (
-                        <Badge variant="outline" className="border-[#EE001E]/50 text-[#EE001E] backdrop-blur-sm bg-red-50/70 rounded-xl">
+                        <Badge variant="outline" className="border-[#EE001E] text-[#EE001E] backdrop-blur-sm bg-red-50/80 rounded-xl shadow-sm">
                           Waiting for Files
                         </Badge>
                       )}
                     </div>
                   </div>
                   {sourceContent && targetContent && sourceDetectedFormat !== targetDetectedFormat && (
-                    <div className="mt-3 p-3 bg-red-50/70 border border-red-200/50 rounded-2xl backdrop-blur-sm">
+                    <div className="mt-3 p-3 bg-red-50/80 border border-red-300 rounded-2xl backdrop-blur-sm shadow-sm">
                       <p className="text-red-800 text-sm">
                         <strong>Cannot compare:</strong> Source file is {sourceDetectedFormat.toUpperCase()} but target file is {targetDetectedFormat.toUpperCase()}. 
                         Both files must be in the same format.
