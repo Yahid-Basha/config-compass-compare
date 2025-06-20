@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FileUploader } from '@/components/FileUploader';
-import { FilePreview } from '@/components/FilePreview';
+import FilePreview from '@/components/FilePreview';
 import DiffViewer from '@/components/DiffViewer';
 import { SummaryPanel } from '@/components/SummaryPanel';
 import { FileComparator } from '@/utils/fileComparator';
