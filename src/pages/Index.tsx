@@ -252,16 +252,136 @@ const Index = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            <div className="lg:col-span-1">
+          <div className="space-y-6">
+            {/* Summary Panel - Full Width at Top */}
+            <div className="w-full">
               <SummaryPanel summary={comparisonResult.summary} changes={comparisonResult.diff} />
             </div>
-            <div className="lg:col-span-3">
-              <DiffViewer 
-                sourceLines={comparisonResult.formatted_diff.source}
-                targetLines={comparisonResult.formatted_diff.target}
-                format={sourceDetectedFormat}
-              />
+
+            {/* Visual Diff Viewer and Change Details - Side by Side */}
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+              {/* Visual Diff Viewer - 65% (3/5 columns) */}
+              <div className="lg:col-span-3">
+                <DiffViewer 
+                  sourceLines={comparisonResult.formatted_diff.source}
+                  targetLines={comparisonResult.formatted_diff.target}
+                  format={sourceDetectedFormat}
+                />
+              </div>
+              
+              {/* Change Details - 35% (2/5 columns) */}
+              <div className="lg:col-span-2">
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <FileText className="h-5 w-5" />
+                      Change Details
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3 max-h-96 overflow-y-auto">
+                      {comparisonResult.diff.length === 0 ? (
+                        <p className="text-gray-500 text-center py-4">No changes detected</p>
+                      ) : (
+                        comparisonResult.diff.map((change, index) => {
+                          const getChangeIcon = (type: string) => {
+                            switch (type) {
+                              case 'addition':
+                                return <span className="text-green-600 font-bold">+</span>;
+                              case 'deletion':
+                                return <span className="text-red-600 font-bold">-</span>;
+                              case 'modification':
+                                return <span className="text-orange-600 font-bold">~</span>;
+                              default:
+                                return <FileText className="h-4 w-4 text-gray-600" />;
+                            }
+                          };
+
+                          const getChangeColor = (type: string) => {
+                            switch (type) {
+                              case 'addition':
+                                return 'text-green-700 bg-green-50 border-green-200';
+                              case 'deletion':
+                                return 'text-red-700 bg-red-50 border-red-200';
+                              case 'modification':
+                                return 'text-orange-700 bg-orange-50 border-orange-200';
+                              default:
+                                return 'text-gray-700 bg-gray-50 border-gray-200';
+                            }
+                          };
+
+                          const formatValue = (value: any): string => {
+                            if (typeof value === 'object') {
+                              return JSON.stringify(value, null, 2);
+                            }
+                            return String(value);
+                          };
+
+                          return (
+                            <div
+                              key={index}
+                              className={`p-3 rounded-lg border ${getChangeColor(change.change_type)}`}
+                            >
+                              <div className="flex items-start gap-2 mb-2">
+                                {getChangeIcon(change.change_type)}
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-medium text-sm truncate" title={change.path}>
+                                    {change.path}
+                                  </p>
+                                  <Badge variant="outline" className="text-xs mt-1">
+                                    {change.change_type}
+                                  </Badge>
+                                </div>
+                              </div>
+                              
+                              {change.change_type === 'modification' && (
+                                <div className="mt-2 space-y-1 text-xs">
+                                  {change.old_value !== undefined && (
+                                    <div className="bg-white/50 p-2 rounded border">
+                                      <span className="font-medium text-red-700">- </span>
+                                      <code className="text-red-800">
+                                        {formatValue(change.old_value)}
+                                      </code>
+                                    </div>
+                                  )}
+                                  {change.new_value !== undefined && (
+                                    <div className="bg-white/50 p-2 rounded border">
+                                      <span className="font-medium text-green-700">+ </span>
+                                      <code className="text-green-800">
+                                        {formatValue(change.new_value)}
+                                      </code>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                              
+                              {change.change_type === 'addition' && change.new_value !== undefined && (
+                                <div className="mt-2 text-xs">
+                                  <div className="bg-white/50 p-2 rounded border">
+                                    <code className="text-green-800">
+                                      {formatValue(change.new_value)}
+                                    </code>
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {change.change_type === 'deletion' && change.old_value !== undefined && (
+                                <div className="mt-2 text-xs">
+                                  <div className="bg-white/50 p-2 rounded border">
+                                    <code className="text-red-800">
+                                      {formatValue(change.old_value)}
+                                    </code>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </div>
         </div>
