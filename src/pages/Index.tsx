@@ -474,7 +474,7 @@ const Index = () => {
               <div className="text-center">
                 <div className="flex items-center justify-center mb-2">
                   <Zap className="h-5 w-5 text-[#EE001E] mr-2" />
-                  <span className="text-2xl font-bold text-gray-900">&lt;1s</span>
+                  <span className="text-2xl font-bold text-gray-900"><1s</span>
                 </div>
                 <p className="text-sm text-gray-600">Avg. Process Time</p>
               </div>
@@ -496,16 +496,39 @@ const Index = () => {
             </CardHeader>
             <CardContent className="p-8">
               <Tabs value={inputMethod} onValueChange={(value) => setInputMethod(value as 'upload' | 'paste')} className="mb-8">
-                <TabsList className="grid w-full grid-cols-2 backdrop-blur-sm bg-white/70 border-2 border-white rounded-2xl">
-                  <TabsTrigger value="upload" className="flex items-center gap-2 rounded-2xl data-[state=active]:bg-white border-2 border-transparent data-[state=active]:border-white">
-                    <Upload className="h-4 w-4" />
-                    File Upload
-                  </TabsTrigger>
-                  <TabsTrigger value="paste" className="flex items-center gap-2 rounded-2xl data-[state=active]:bg-white border-2 border-transparent data-[state=active]:border-white">
-                    <FileText className="h-4 w-4" />
-                    Paste Content
-                  </TabsTrigger>
-                </TabsList>
+                <div className="relative p-1 backdrop-blur-sm bg-white/70 border-2 border-gray-300 rounded-2xl">
+                  {/* Sliding background indicator */}
+                  <div 
+                    className={`absolute top-1 bottom-1 w-1/2 bg-black rounded-xl transition-transform duration-300 ease-in-out ${
+                      inputMethod === 'upload' ? 'translate-x-0' : 'translate-x-full'
+                    }`}
+                  />
+                  
+                  <TabsList className="grid w-full grid-cols-2 bg-transparent relative z-10">
+                    <TabsTrigger 
+                      value="upload" 
+                      className={`flex items-center gap-2 rounded-xl transition-colors duration-300 ${
+                        inputMethod === 'upload' 
+                          ? 'text-white bg-transparent' 
+                          : 'text-gray-700 bg-transparent hover:text-gray-900'
+                      }`}
+                    >
+                      <Upload className="h-4 w-4" />
+                      File Upload
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="paste" 
+                      className={`flex items-center gap-2 rounded-xl transition-colors duration-300 ${
+                        inputMethod === 'paste' 
+                          ? 'text-white bg-transparent' 
+                          : 'text-gray-700 bg-transparent hover:text-gray-900'
+                      }`}
+                    >
+                      <FileText className="h-4 w-4" />
+                      Paste Content
+                    </TabsTrigger>
+                  </TabsList>
+                </div>
 
                 <TabsContent value="upload" className="mt-6">
                   <FileUploader onFilesChange={handleFileUpload} />
